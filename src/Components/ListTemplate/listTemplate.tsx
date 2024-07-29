@@ -13,7 +13,7 @@ import { listTemplateTypes } from "./types";
 
 function ListTemplate({ note, nav, maxHeight, label, theme }: listTemplateTypes) {
   const source: HTMLSource = {
-    html: typeof note.data === 'string' ? note.data : ""
+    html: typeof note.content === 'string' ? note.content : ""
   };
   
   const { width: contentWidth } = useWindowDimensions();
@@ -29,8 +29,6 @@ function ListTemplate({ note, nav, maxHeight, label, theme }: listTemplateTypes)
     date = 'error';
   }
   const formattedDate = date instanceof Date ? date.toLocaleString("en-US") : date;
-
-
 
   const title = () => {
     if (!note.title?.length) return "";

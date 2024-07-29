@@ -10,6 +10,8 @@ export default function StaggedLabel({data}:StaggedLabelProps){
             <ListTemplate note={item} nav={navigation} maxHeight={150} />
         );
       };
+    //   console.log(data,'test');
+      
     return (
         <StaggeredList
             data={data}

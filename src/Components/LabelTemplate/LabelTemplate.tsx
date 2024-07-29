@@ -17,7 +17,7 @@ import withTheme from '../HOC';
 import { styles } from './style';
 import { colorSchemeState, labelTemplateTypes } from './types';
 
-function LabelTemplate({icon, text, files, note,theme}:labelTemplateTypes) {
+function LabelTemplate({icon,labelName, labelId, numberOfNotes, uid,theme}:labelTemplateTypes) {
   const nav = useNavigation<RootStackScreenProps<keyof RootStackParamList>>();
   const colorScheme = useSelector((state:colorSchemeState)=>state.theme.theme)
   const THEME = theme ;
@@ -32,7 +32,7 @@ function LabelTemplate({icon, text, files, note,theme}:labelTemplateTypes) {
     }
   }
   function navigationHandler() {
-    nav.navigate(SCREEN_CONSTANTS.Label, { text, note });
+    nav.navigate(SCREEN_CONSTANTS.Label, { labelId, uid, labelName });
   }
   return (
     
@@ -44,8 +44,8 @@ function LabelTemplate({icon, text, files, note,theme}:labelTemplateTypes) {
           <TouchableOpacity onPress={navigationHandler}>
             <View style={styles.inner}>
               {icon(heightPercentageToDP('6.2%'), heightPercentageToDP('6.2%'))}
-              <Text style={[styles.text,{color:THEME.TEXT1}]}>{label(text)}</Text>
-              <Text style={{color:THEME.TEXT1}}>{files}{files<=1? ' File':' Files'}</Text>
+              <Text style={[styles.text,{color:THEME.TEXT1}]}>{label(labelName)}</Text>
+              <Text style={{color:THEME.TEXT1}}>{numberOfNotes}{numberOfNotes<=1? ' File':' Files'}</Text>
             </View>
           </TouchableOpacity>
         </ImageBackground>

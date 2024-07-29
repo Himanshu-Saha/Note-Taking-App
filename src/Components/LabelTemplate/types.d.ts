@@ -8,8 +8,9 @@ export interface colorSchemeState{
 
 export interface labelTemplateTypes{
     icon:(...params: any[]) => React.JSX.Element, 
-    text:string,
-    files:number,
-    note:string,
-    theme:themeType
+    labelId:string,
+    numberOfNotes:number,
+    uid:string,
+    theme:themeType,
+    labelName:string,
 }

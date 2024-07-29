@@ -26,17 +26,17 @@ import { STRINGS, STRINGS_FIREBASE } from "../../Constants/Strings";
 import { colorSchemeState } from "../MainScreen/type";
 import { styles } from "./style";
 import { HomeProps, newDataType } from "./types";
+import { fetchLabels } from "../../Utils";
+import { useUpdateLabel } from "../../Hooks/firebase";
 // import { AdBannerComponent } from "../../Shared/Services/NativeModules";
 
 function Home({ theme }: HomeProps) {
   const [usedSpace, setUsedSpace] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
   const [label, setLabel] = useState<newDataType | null>();
-
   const colorScheme = useSelector(
     (state: colorSchemeState) => state.theme.theme
   );
-
   const THEME = theme;
   const user = auth().currentUser;
   const defaultImage = IMAGES.DEFAULTUSER;
@@ -44,58 +44,11 @@ function Home({ theme }: HomeProps) {
     ? { uri: { uri: user.photoURL } }
     : { uri: defaultImage };
   useEffect(() => {
-    getLabel();
-    if (user) {
-      const unsubscribe = firestore()
-        .collection(STRINGS.FIREBASE.USER)
-        .doc(user.uid)
-        .collection(STRINGS.FIREBASE.LABELS)
-        .orderBy(STRINGS_FIREBASE.TIME_STAMP, STRINGS_FIREBASE.ORDER)
-        .onSnapshot((querySnapshot) => {
-          const newData: newDataType = [];
-          querySnapshot.forEach((doc) => {
-            newData.push({ id: doc.id, count: doc.data().count });
-          });
-          setLabel(newData);
-        });
-      return () => {
-        unsubscribe();
-      };
-    }
+    if(user?.uid)
+    fetchLabels(user?.uid);
   }, []);
-  const getAllData = async () => {
-    try {
-      await firestore()
-        .collection(STRINGS.FIREBASE.USER)
-        .doc(user?.uid)
-        // .orderBy(STRINGS_FIREBASE.TIME_STAMP, STRINGS_FIREBASE.ORDER)
-        .get();
-    } catch (e) {
-      // console.log(e, 91);
-    }
-  };
-  const getLabel = async () => {
-    try {
-      if (user) {
-        getAllData();
-
-        const snapShot = await firestore()
-          .collection(STRINGS.FIREBASE.USER)
-          .doc(user.uid)
-          .collection(STRINGS.FIREBASE.LABELS)
-          .orderBy(STRINGS_FIREBASE.TIME_STAMP, STRINGS_FIREBASE.ORDER)
-          .get();
-        const labelData: newDataType = [];
-        snapShot.forEach((doc) => {
-          labelData.push({ id: doc.id, count: doc.data().count });
-        });
-        setLabel(labelData);
-        // console.log(label, 70);}
-      }
-    } catch (error) {
-      // console.error("Error retrieving notes:", error);
-    }
-  };
+  if(user?.uid)
+  useUpdateLabel(user?.uid,setLabel)
   const fetchStorageInfo = useCallback(async () => {
     try {
       const freeDiskStorage = await DeviceInfo.getTotalDiskCapacity();
@@ -191,9 +144,10 @@ function Home({ theme }: HomeProps) {
                           ? ICONS.OTHERS
                           : ICONS.INTEL_BLACK
                       }
-                      text={item.id}
-                      files={item.count}
-                      note={user.uid}
+                      labelName={item.id}
+                      labelId = {item.labelId}
+                      numberOfNotes={item.count}
+                      uid={user.uid}
                       // theme={THEME}
                     />
                   )}
