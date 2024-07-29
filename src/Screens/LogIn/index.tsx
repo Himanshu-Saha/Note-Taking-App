@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import auth from "@react-native-firebase/auth";
+
 import CustomButton from "../../Components/Button/customButton";
 import FormikTemplate from "../../Components/FormikTemplate";
 import withTheme from "../../Components/HOC";
@@ -14,6 +14,7 @@ import { logIn, updateUser } from "../../Store/Common";
 import { useAppDispatch, useAppSelector } from "../../Store";
 import { styles } from "./style";
 import { LogInProps } from "./types";
+import { logInUser } from "../../Utils";
 
 const SignupSchema = Yup.object().shape({
   email: Yup.string().email(YUP_STRINGS.INVALID_EMAIL).required(YUP_STRINGS.ENTER_EMAIL),
@@ -27,22 +28,10 @@ const LogIn: React.FC<LogInProps> = ({ navigation, theme }) => {
 
   const isLogedIn = useAppSelector((state) => state.common.isLogedIn);
   const dispatch = useAppDispatch();
-  
+
   const THEME = theme;
-  
-  const logInUser = async (email: string, password: string) => {
-    try {
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
-      dispatch(logIn(true));
-      dispatch(
-        updateUser({ uid: userCredential.user.uid, providerId: "firebase" })
-      );
-      await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true));
-    } catch (error) {
-      console.error(error);
-      setErrorLogin(true);
-    }
-  };
+
+
 
   const forgot = () => {
     navigation.navigate(SCREEN_CONSTANTS.ForgotPassword);
@@ -61,8 +50,8 @@ const LogIn: React.FC<LogInProps> = ({ navigation, theme }) => {
           <Formik
             initialValues={{ email: "", password: "" }}
             validationSchema={SignupSchema}
-            onSubmit={(values) => {            
-              logInUser(values.email, values.password);
+            onSubmit={(values) => {
+              logInUser(values.email, values.password,dispatch);
             }}
           >
             {({

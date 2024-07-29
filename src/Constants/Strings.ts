@@ -98,3 +98,42 @@ export const PLATEFORM = {
   IOS:'ios',
   ANDROID:'Android'
 }
+
+
+// 
+export const NOTES = {
+  PERSONAL: {
+    NAME: 'Personal',
+    TITLE: 'Personal Notes!',
+    CONTENT: 'Note your upcoming plans and goals!',
+  },
+  ACADEMICS: {
+    NAME: 'Academic',
+    TITLE: 'Study Notes!',
+    CONTENT: 'Add lectures, track assignments, and notes.',
+  },
+  WORK: {
+    NAME: 'Work',
+    TITLE: 'Work Notes!',
+    CONTENT: 'Track tasks, meetings, and projects here.',
+  },
+  OTHERS: {
+    NAME: 'Others',
+    TITLE: 'Miscellaneous Notes!',
+    CONTENT: 'Your space for all miscellaneous notes.',
+  },
+};
+
+export const FIREBASE_STRINGS = {
+  USER: 'user',
+  LABELS: 'labels',
+  NOTES: 'notes',
+  LABEL: 'label',
+  TIME_STAMP:'time_stamp',
+  ORDER:'asc',
+  ERROR: {
+    INVALID_CREDENTIALS: 'auth/invalid-credential',
+    DEFAULT: 'Some error occured please try again',
+    POPUP_CLOSED: 'auth/popup-closed-by-user',
+  },
+}as const;

@@ -6,32 +6,14 @@ import CustomButton from '../../Components/Button/customButton';
 import FormikTemplate from '../../Components/FormikTemplate';
 import withTheme from '../../Components/HOC';
 import { PLATEFORM, STRINGS } from '../../Constants/Strings';
-import { SignupSchema, signUpUser } from '../../Utils';
+import { createUser, SignupSchema, signUpUser } from '../../Utils';
 import { styles } from './style';
 import { SignUpProps, valuesTypes } from './types';
 
 // utils
 function SignUp({ navigation,theme }:SignUpProps) {
   const dispatch = useDispatch()
-  
   const THEME = theme 
-
-  const signUp = async (values:valuesTypes) => {
-    try {
-      let userCredentials = await auth().createUserWithEmailAndPassword(
-        values.email,
-        values.password,
-      );
-      await userCredentials.user.updateProfile({
-        displayName: values.firstName + ' ' + values.lastName,
-      });
-      console.log(userCredentials,1)
-      signUpUser(userCredentials.user,'firebase',dispatch,navigation)
-    } catch (error) {
-      // console.error('Error creating account:', error.code, error.message);
-    }
-  };
-
   return (
     
       <SafeAreaView style={[styles.container,{backgroundColor:THEME.BACKGROUND}]}>
@@ -50,7 +32,7 @@ function SignUp({ navigation,theme }:SignUpProps) {
                   number: '',
                 }}
                 validationSchema={SignupSchema}
-                onSubmit={signUp}>
+                onSubmit={(values)=>createUser(values,dispatch,navigation)}>
                 {({
                   handleSubmit,
                   touched,

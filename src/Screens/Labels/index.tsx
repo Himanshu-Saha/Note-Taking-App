@@ -8,23 +8,26 @@ import Search from "../../Components/Header";
 import StaggedLabel from "../../Components/Staggered";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { STRINGS, STRINGS_FIREBASE } from "../../Constants/Strings";
-import { fetchLabelData } from "../../Firebase Utils";
 import {
   InterstitialAd
 } from "../../Shared/Services/NativeModules";
 import { styles } from "./style";
 import { LabelProps, labelNotesDataType } from "./types";
+import { fetchNotesWithLabel } from "../../Utils";
+import { useFetchUpdatedLabelData } from "../../Hooks/firebase";
 
 function Label({ navigation, route, theme }: LabelProps) {
   const [searchData, setSearchData] = useState<labelNotesDataType>([]);
   const [notesData, setNotesData] = useState<labelNotesDataType>([]);
 
-  const uid = route.params?.note ?? "";
-  const label = route.params?.text ?? "";
+  const uid = route.params?.uid ?? "";
+  const labelId = route.params?.labelId ?? "";
+  const labelName = route.params?.labelName ?? "";
   const THEME = theme;
   const note = {
     uid,
-    label,
+    labelId,
+    labelName,
   };
 
   const search = (e: string) => {
@@ -42,36 +45,12 @@ function Label({ navigation, route, theme }: LabelProps) {
   };
 
   useEffect(() => {
-    fetchLabelData(uid, label, setSearchData, setNotesData);
-    const unsubscribe = firestore()
-      .collection(STRINGS.FIREBASE.USER)
-      .doc(uid)
-      .collection(STRINGS.FIREBASE.NOTES)
-
-      .where(STRINGS_FIREBASE.LABEL, "==", label)
-      .orderBy(STRINGS_FIREBASE.TIME_STAMP, STRINGS_FIREBASE.ORDER)
-      .onSnapshot((querySnapshot) => {
-        const newData: labelNotesDataType = [];
-        querySnapshot.forEach((doc) => {
-          newData.push({
-            title: doc.data().title,
-            data: doc.data().content,
-            noteId: doc.id,
-            ImageUrl: doc.data().url,
-            id: uid,
-            label: label,
-          });
-        });
-
-        setNotesData(newData);
-        setSearchData(newData);
-      });
-    return () => unsubscribe();
+    fetchNotesWithLabel(labelId, labelName, uid, setNotesData);
   }, [uid]);
-
+  useFetchUpdatedLabelData(labelId, labelName, uid, setNotesData, setSearchData)
   useEffect(() => {
-    InterstitialAd("ca-app-pub-3940256099942544/1033173712");
-}, []);
+    // InterstitialAd("ca-app-pub-3940256099942544/1033173712");
+  }, []);
 
   const addNewNote = () => {
     navigation.navigate(SCREEN_CONSTANTS.Note, { note });
@@ -85,10 +64,10 @@ function Label({ navigation, route, theme }: LabelProps) {
           onChangeText={search}
           handleSetInittialOnBlur={() => setSearchData(notesData)}
           notesData={notesData}
-          headerText={label}
+          headerText={labelName}
         />
       </View>
-      <StaggedLabel data={searchData} />
+      <StaggedLabel data={notesData} />
       <View style={styles.addNotes}>
         <CustomButton
           text={STRINGS.ADD_NEW_NOTES}

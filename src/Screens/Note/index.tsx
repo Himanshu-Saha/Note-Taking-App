@@ -29,9 +29,8 @@ import withTheme from "../../Components/HOC";
 import Header from "../../Components/Header";
 import UserImage from "../../Components/Image";
 import { STRINGS } from "../../Constants/Strings";
-import { createNote, createReminder, updateData, updateReminder } from "../../Firebase Utils";
 import { loadImage } from "../../Store/Image";
-import { imageCompressor } from "../../Utils";
+import { createNote, imageCompressor, updateNote } from "../../Utils";
 import { styles } from "./styles";
 import { NoteScreenProps, imageState } from "./types";
 
@@ -50,8 +49,9 @@ const Note = ({ route, theme }:NoteScreenProps) => {
   let initialTitle = "";
   let noteId = "";
   let data = "";
-  let lable = "Others";
+  let labelId = "Others";
   let imageInitialData: string[] = [];
+  let defaultLabelName = "Others"
   const reminder = useRef(false);
   const isNew = useRef(true);
   const isCompleteNew = useRef(false);
@@ -62,17 +62,18 @@ const Note = ({ route, theme }:NoteScreenProps) => {
   const noteNewId = useRef<string|null>();
   
   if (route.params != undefined) {
-    if (route.params?.labelData != undefined) {
-      
+    if (route.params?.labelData != undefined) {    
       isCompleteNew.current = true;
     } else if (route.params?.note != undefined) {
       if (route.params.note.noteId == undefined) {
-        lable = route.params.note.label;
+        labelId = route.params.note.labelRef;
+        defaultLabelName = route.params.note.labelName;
       } else {
-        data = route.params.note.data;
+        data = route.params.note.content;
         initialTitle = route.params.note.title;
         noteId = route.params.note.noteId;
-        lable = route.params.note.label;
+        labelId = route.params.note.labelRef;
+        defaultLabelName = route.params.note.labelName;
         isNew.current = false;
         noteIdExist.current = true;
         if (imageInitData[noteId]) imageInitialData = imageInitData[noteId];
@@ -92,12 +93,13 @@ const Note = ({ route, theme }:NoteScreenProps) => {
   }
   const [date, setDate] = useState(dateRef.current);
   const [title, setTitle] = useState(initialTitle);
-  const [label, setLable] = useState(lable);
-  const [value, setValue] = useState(lable);
+  const [label, setLable] = useState(labelId);
+  const [value, setValue] = useState(labelId);
   const [imageData, setImageData] = useState(imageInitialData);
-
+  
+  const labelName = useRef(defaultLabelName)
   const articleData = useRef(data);
-  const labelRef = useRef(lable);
+  const labelRef = useRef(labelId);
   const titleRef = useRef(initialTitle);
 
   const THEME = theme;
@@ -128,22 +130,23 @@ const Note = ({ route, theme }:NoteScreenProps) => {
     dateRef.current = date;
   }, [date]);
 
-
-
     const fetchData = async () => {
       if (!isNew.current) {
         if (reminder.current) {
-          await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
+          // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
         } else {
-          await updateData(uid,noteId,titleRef.current,articleData.current);
+          console.log(titleRef.current,'titleRef');
+          console.log(articleData.current,'articleData');
+          
+          await updateNote(uid,noteId,titleRef.current,articleData.current);
         }
       }
      else {
       if (reminder.current) {
-        await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
+        // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
         // console.log("reminder created success");
       } else {
-        await createNote(uid,labelRef.current,label,articleData.current,titleRef.current,noteNewId,img.current);
+        await createNote(uid,labelRef.current,titleRef.current,articleData.current);
         // console.log("note created success");
       }
     }
@@ -215,7 +218,7 @@ const Note = ({ route, theme }:NoteScreenProps) => {
         style={styles.subContainer}
       >
         <View>
-          <Header headerText={isCompleteNew.current ? value : label} />
+          <Header headerText={labelName.current} />
         </View>
         {isCompleteNew.current && (
           <DropdownComponent
@@ -240,8 +243,6 @@ const Note = ({ route, theme }:NoteScreenProps) => {
             },
           ]}
         />
-        {/* {
-            true && */}
         <View>
           <FlatList
             horizontal
