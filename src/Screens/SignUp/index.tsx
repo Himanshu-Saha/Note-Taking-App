@@ -29,7 +29,6 @@ function SignUp({ navigation,theme }:SignUpProps) {
                   email: '',
                   password: '',
                   confirmPassword: '',
-                  number: '',
                 }}
                 validationSchema={SignupSchema}
                 onSubmit={(values)=>createUser(values,dispatch,navigation)}>
@@ -82,14 +81,6 @@ function SignUp({ navigation,theme }:SignUpProps) {
                       onChangeText={handleChange(STRINGS.CONFIRM_PASSWORD_SMALL)}
                       onBlur={() => setFieldTouched(STRINGS.CONFIRM_PASSWORD_SMALL)}
                       error={errors.confirmPassword}
-                    />
-                    <FormikTemplate
-                      placeholder={STRINGS.PHONE_NUMBER}
-                      values={values.number}
-                      touched={touched.number}
-                      onChangeText={handleChange(STRINGS.PHONE_NUMBER_SMALL)}
-                      onBlur={() => setFieldTouched(STRINGS.PHONE_NUMBER_SMALL)}
-                      error={errors.number}
                     />
                     <Text style={[styles.text,{color:THEME.TEXT1}]}>
                       {STRINGS.SIGN_UP_CONDITIONS}

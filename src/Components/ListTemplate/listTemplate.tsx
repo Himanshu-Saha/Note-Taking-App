@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Text,
   TouchableOpacity,
@@ -6,29 +6,42 @@ import {
   useWindowDimensions,
 } from "react-native";
 import RenderHTML, { HTMLSource } from "react-native-render-html";
+import CustomDialogInput from "../../Components/DialogInput";
 import { SCREEN_CONSTANTS } from "../../Constants";
+import { ICONS } from "../../Constants/Icons";
+import { deleteLabel, updateLabel } from "../../Utils";
 import withTheme from "../HOC";
+import Icon from "../Icon";
 import { styles } from "./style";
 import { listTemplateTypes } from "./types";
 
-function ListTemplate({ note, nav, maxHeight, label, theme }: listTemplateTypes) {
+function ListTemplate({
+  note,
+  nav,
+  maxHeight,
+  label,
+  theme,
+  uid,
+}: listTemplateTypes) {
+  const [isDialogInputVisible,setIsDialogInputVisible] = useState(false);
   const source: HTMLSource = {
-    html: typeof note.content === 'string' ? note.content : ""
+    html: typeof note.content === "string" ? note.content : "",
   };
-  
+
   const { width: contentWidth } = useWindowDimensions();
   const THEME = theme;
   let date;
-  if (typeof note.timestamp === 'string') {
+  if (typeof note.timestamp === "string") {
     date = new Date(note.timestamp);
   } else if (note.timestamp) {
     date = new Date(
       note.timestamp.seconds * 1000 + note.timestamp.nanoseconds / 1000000
     );
   } else {
-    date = 'error';
+    date = "error";
   }
-  const formattedDate = date instanceof Date ? date.toLocaleString("en-US") : date;
+  const formattedDate =
+    date instanceof Date ? date.toLocaleString("en-US") : date;
 
   const title = () => {
     if (!note.title?.length) return "";
@@ -37,9 +50,12 @@ function ListTemplate({ note, nav, maxHeight, label, theme }: listTemplateTypes)
       else return note.title;
     }
   };
-
+  const handleSubmit = (labelName)=>{
+    updateLabel(uid,note.labelId,labelName);
+  }
   return (
     <>
+    <CustomDialogInput input={note.labelName} isVisible={isDialogInputVisible} onCancel={()=>setIsDialogInputVisible(false)} onSubmit={handleSubmit}/>
       {!label && (
         <TouchableOpacity
           onPress={() => nav.navigate(SCREEN_CONSTANTS.Note, { note })}
@@ -113,8 +129,16 @@ function ListTemplate({ note, nav, maxHeight, label, theme }: listTemplateTypes)
               },
             ]}
           >
-            {note.id}
+            {note.labelName}
           </Text>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{paddingHorizontal:4}}>
+              <Icon icon={ICONS.EDIT} width={20} height={20} action={()=>setIsDialogInputVisible(true)}/>
+            </View>
+            <View style={{paddingHorizontal:4}}>
+              <Icon icon={ICONS.DELETE} width={20} height={20} action={()=>deleteLabel(uid,note.labelId)}/>
+            </View>
+          </View>
         </View>
       )}
     </>
