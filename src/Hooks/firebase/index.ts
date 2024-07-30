@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import firestore from "@react-native-firebase/firestore";
+import { useEffect } from "react";
 import { FIREBASE_STRINGS } from "../../Constants/Strings";
 
 export const useUpdateLabel = (
     uid: string,
-    setData: (key: { id: string, labelId: string, count: number}[]) => void
+    setData: (key: { labelName: string, labelId: string, count: number}[]) => void
 ) => {
     useEffect(() => {
         const unsubscribe = firestore()
@@ -14,7 +14,7 @@ export const useUpdateLabel = (
             .orderBy(FIREBASE_STRINGS.TIME_STAMP, FIREBASE_STRINGS.ORDER)
             .onSnapshot((querySnapshot) => {
                 const labels = querySnapshot.docs.map((item) => ({
-                    id: item.data().label,
+                    labelName: item.data().label,
                     labelId: item.id,
                     count: item.data().count,
                 }));

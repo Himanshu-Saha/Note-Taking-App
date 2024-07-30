@@ -3,7 +3,7 @@ import firestore from '@react-native-firebase/firestore';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import AddLabel from '../../Components/AddLabel/addLabel';
+import AddLabel from '../../Components/AddLabel';
 import withTheme from '../../Components/HOC';
 import MyTabBar from '../../Components/TabBar';
 import { SCREEN_CONSTANTS } from '../../Constants';

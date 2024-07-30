@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { heightPercentageToDP } from 'react-native-responsive-screen';
@@ -13,7 +13,7 @@ import { dropdownComponentProps } from './types';
     const THEME = theme     
 
     data.forEach((label)=>{
-        labelData.push({'label':label.id})
+        labelData.push({'label':label.labelName})
     })
     
     return (

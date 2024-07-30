@@ -1,5 +1,4 @@
 import { default as auth } from "@react-native-firebase/auth";
-import firestore from "@react-native-firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -22,12 +21,12 @@ import withTheme from "../../Components/HOC";
 import LabelTemplate from "../../Components/LabelTemplate/LabelTemplate";
 import { ICONS } from "../../Constants/Icons";
 import { IMAGES } from "../../Constants/Images";
-import { STRINGS, STRINGS_FIREBASE } from "../../Constants/Strings";
+import { STRINGS } from "../../Constants/Strings";
+import { useUpdateLabel } from "../../Hooks/firebase";
+import { fetchLabels } from "../../Utils";
 import { colorSchemeState } from "../MainScreen/type";
 import { styles } from "./style";
 import { HomeProps, newDataType } from "./types";
-import { fetchLabels } from "../../Utils";
-import { useUpdateLabel } from "../../Hooks/firebase";
 // import { AdBannerComponent } from "../../Shared/Services/NativeModules";
 
 function Home({ theme }: HomeProps) {
@@ -144,7 +143,7 @@ function Home({ theme }: HomeProps) {
                           ? ICONS.OTHERS
                           : ICONS.INTEL_BLACK
                       }
-                      labelName={item.id}
+                      labelName={item.labelName}
                       labelId = {item.labelId}
                       numberOfNotes={item.count}
                       uid={user.uid}
