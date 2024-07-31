@@ -51,6 +51,7 @@ function Label({ navigation, route, theme }: LabelProps) {
   const addNewNote = () => {
     navigation.navigate(SCREEN_CONSTANTS.Note, { note });
   };
+//  console.log(useQuery(Note),'realm');
   
   return (
     <SafeAreaView

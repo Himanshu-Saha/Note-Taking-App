@@ -9,5 +9,5 @@ export interface headerTypes extends WithThemeProps{
   // theme?:themeType,
   handleSetInittialOnBlur?: () => void,
   showDelete?:boolean,
-  handleDelete:any
+  handleDelete?:any
 }

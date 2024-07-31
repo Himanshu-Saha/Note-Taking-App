@@ -230,26 +230,30 @@ export const createNote = async (
   uid: string,
   labelId: string,
   title: string,
-  content: string
-  // image:string[],
+  content: string,
+  imageURL:string[]
 ) => {
   const labelRef = firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
     .collection(FIREBASE_STRINGS.LABELS)
     .doc(labelId);
-  await firestore()
+  const newNoteRef = await firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
     .collection(FIREBASE_STRINGS.NOTES)
-    .add({
+    .doc();
+    const URL = await uploadImages(uid, newNoteRef.id, imageURL).catch((e) =>
+      console.log(e)
+    );
+   await newNoteRef.set({
       label: labelRef,
       title: title,
       content: content,
       time_stamp: firestore.FieldValue.serverTimestamp(),
-      url: [],
+      url: URL,
     });
-  labelRef.update({ count: firestore.FieldValue.increment(1) });
+  await labelRef.update({ count: firestore.FieldValue.increment(1) });
 };
 
 export const updateNote = async (
@@ -362,10 +366,10 @@ export const uploadImages = async (
   noteId: string,
   imageURL: string[]
 ) => {
-  if (!imageURL || imageURL.length > 0) {
+  if (!imageURL || imageURL.length === 0) {
     console.log("Empty imageURL");
     return;
-  }
+  }  
   const uploadedImageURLs = await Promise.all(
     imageURL.map(async (image) => {
       const photoName = image.split("/").pop();
@@ -375,11 +379,12 @@ export const uploadImages = async (
       return reference.getDownloadURL();
     })
   );
-  await firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.NOTES)
-    .doc(noteId)
-    .update({ url: uploadedImageURLs });
+  return uploadedImageURLs
+  // await firestore()
+  //   .collection(FIREBASE_STRINGS.USER)
+  //   .doc(uid)
+  //   .collection(FIREBASE_STRINGS.NOTES)
+  //   .doc(noteId)
+  //   .update({ url: uploadedImageURLs });
   console.log("images uploaded successfully");
 };
