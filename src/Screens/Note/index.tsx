@@ -1,6 +1,6 @@
 import { default as auth } from "@react-native-firebase/auth";
-import firestore from "@react-native-firebase/firestore";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -15,7 +15,7 @@ import ImageModal from "react-native-image-modal";
 import {
   RichEditor,
   RichToolbar,
-  actions
+  actions,
 } from "react-native-pell-rich-editor";
 import {
   heightPercentageToDP,
@@ -27,18 +27,23 @@ import CustomDialogInput from "../../Components/DialogInput";
 import DropdownComponent from "../../Components/Dropdown/dropdown";
 import withTheme from "../../Components/HOC";
 import Header from "../../Components/Header";
-import UserImage from "../../Components/Image";
+import ImagePicker from "../../Components/Image";
 import { STRINGS } from "../../Constants/Strings";
 import { loadImage } from "../../Store/Image";
-import { createNote, imageCompressor, updateNote } from "../../Utils";
+import {
+  createNote,
+  deleteNote,
+  imageCompressor,
+  updateNote,
+  uploadImages
+} from "../../Utils";
 import { styles } from "./styles";
 import { NoteScreenProps, imageState } from "./types";
 
-const Note = ({ route, theme }:NoteScreenProps) => {
-  const [photo, setPhoto] = useState<string|null>(null);
+const Note = ({ route, theme }: NoteScreenProps) => {
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [keyboardVerticalOffset, setKeyboardVerticalOffset] = useState(0);
-
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const imageInitData = useSelector(
     (state: imageState) => state.image.imageUri
@@ -51,7 +56,7 @@ const Note = ({ route, theme }:NoteScreenProps) => {
   let data = "";
   let labelId = "Others";
   let imageInitialData: string[] = [];
-  let defaultLabelName = "Others"
+  let defaultLabelName = "Others";
   const reminder = useRef(false);
   const isNew = useRef(true);
   const isCompleteNew = useRef(false);
@@ -59,20 +64,20 @@ const Note = ({ route, theme }:NoteScreenProps) => {
   const dateRef = useRef(new Date());
   const RichText = useRef<RichEditor>(null);
   const img = useRef<string[]>([]);
-  const noteNewId = useRef<string|null>();
-  
+  const noteNewId = useRef<string | null>();
+
   if (route.params != undefined) {
-    if (route.params?.labelData != undefined) {    
+    if (route.params?.labelData != undefined) {
       isCompleteNew.current = true;
     } else if (route.params?.note != undefined) {
       if (route.params.note.noteId == undefined) {
-        labelId = route.params.note.labelRef;
+        labelId = route.params.note.labelId;
         defaultLabelName = route.params.note.labelName;
       } else {
         data = route.params.note.content;
         initialTitle = route.params.note.title;
         noteId = route.params.note.noteId;
-        labelId = route.params.note.labelRef;
+        labelId = route.params.note.labelId;
         defaultLabelName = route.params.note.labelName;
         isNew.current = false;
         noteIdExist.current = true;
@@ -91,19 +96,21 @@ const Note = ({ route, theme }:NoteScreenProps) => {
       }
     }
   }
+  
   const [date, setDate] = useState(dateRef.current);
   const [title, setTitle] = useState(initialTitle);
   const [label, setLable] = useState(labelId);
   const [value, setValue] = useState(labelId);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [imageData, setImageData] = useState(imageInitialData);
-  
-  const labelName = useRef(defaultLabelName)
+  const [newImageData, setNewImageData] = useState<string[]>([]);
+  const labelName = useRef(defaultLabelName);
   const articleData = useRef(data);
   const labelRef = useRef(labelId);
   const titleRef = useRef(initialTitle);
 
   const THEME = theme;
-  
+
   useEffect(() => {
     labelRef.current = value;
   }, [value]);
@@ -115,6 +122,7 @@ const Note = ({ route, theme }:NoteScreenProps) => {
       try {
         const newUri = await imageCompressor(photo);
         setImageData((prevImageData) => [...prevImageData, newUri]);
+        setNewImageData((prevImageData) => [...prevImageData, newUri]);
         img.current = [...img.current, newUri];
       } catch (error) {
         // console.log("Error compressing image:", error);
@@ -130,34 +138,44 @@ const Note = ({ route, theme }:NoteScreenProps) => {
     dateRef.current = date;
   }, [date]);
 
-    const fetchData = async () => {
-      if (!isNew.current) {
-        if (reminder.current) {
-          // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
-        } else {
-          console.log(titleRef.current,'titleRef');
-          console.log(articleData.current,'articleData');
-          
-          await updateNote(uid,noteId,titleRef.current,articleData.current);
-        }
+  const fetchData = async () => {
+    if (!isNew.current) {
+      if (reminder.current) {
+        // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
+      } else {
+        console.log(noteId, uid);
+        await updateNote(
+          uid,
+          noteId,
+          titleRef.current,
+          articleData.current
+        ).catch((e) => console.log(e));
+        await uploadImages(uid, noteId, newImageData).catch((e) =>
+          console.log(e)
+        );
+        console.log("note updated");
       }
-     else {
+    } else {
       if (reminder.current) {
         // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
         // console.log("reminder created success");
       } else {
-        await createNote(uid,labelRef.current,titleRef.current,articleData.current);
-        // console.log("note created success");
+        await createNote(
+          uid,
+          labelRef.current,
+          titleRef.current,
+          articleData.current
+        );
       }
     }
     if (noteIdExist.current) {
       dispatch(loadImage({ uid: uid, noteId: noteId, uri: img.current }));
-    } 
-    else if (noteNewId.current) {     
+    } else if (noteNewId.current) {
       dispatch(
         loadImage({ uid: uid, noteId: noteNewId.current, uri: img.current })
       );
-    }}
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -202,6 +220,13 @@ const Note = ({ route, theme }:NoteScreenProps) => {
     RichText.current?.insertLink(link, link);
     setIsDialogVisible(false);
   };
+  const handleDelete = () => {
+    console.log(label,'labekl',noteId);
+    
+    deleteNote(uid, noteId, label)
+      .then(() => navigation.goBack()) 
+      .catch((e) => console.log(e));
+  };
   return (
     <SafeAreaView
       style={[
@@ -218,7 +243,7 @@ const Note = ({ route, theme }:NoteScreenProps) => {
         style={styles.subContainer}
       >
         <View>
-          <Header headerText={labelName.current} />
+          <Header headerText={labelName.current} showDelete={true} handleDelete={handleDelete}/>
         </View>
         {isCompleteNew.current && (
           <DropdownComponent
@@ -339,7 +364,7 @@ const Note = ({ route, theme }:NoteScreenProps) => {
             onInsertLink={handleInsertLink}
             iconMap={{
               [actions.insertImage]: () => (
-                <UserImage photo={photo} setPhoto={setPhoto} />
+                <ImagePicker photo={photo} setPhoto={setPhoto} />
               ),
             }}
           />

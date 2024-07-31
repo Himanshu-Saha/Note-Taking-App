@@ -6,12 +6,13 @@ import withTheme from "../HOC";
 import { addLabelProps } from "./types";
 
 function AddLabel({ uid, show, setShow, theme }: addLabelProps) {
-  const [newLabelName, setNewLabelName] = useState<string>('');
+  const [newLabelName, setNewLabelName] = useState<string>();
   useEffect(() => {
-    const regex = /^\s$/
-    if (uid && !regex.test(newLabelName)) createLabel(uid, newLabelName);
+    if(newLabelName){
+    const regex = /^[\s\u00A0\xA0]*$/;
+    console.log(newLabelName);   
+    if (uid && !regex.test(newLabelName)) createLabel(uid, newLabelName);}
   }, [newLabelName]);
-  // setShow(true)
   return (
     <DialogInput
       isDialogVisible={show}

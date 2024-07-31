@@ -11,7 +11,7 @@ import { STRINGS, STRINGS_FIREBASE } from '../../Constants/Strings';
 import ADD_LABELS from '../../Screens/AddLabels';
 import Home from '../../Screens/Home';
 import Note from '../../Screens/Note';
-import Extar2 from '../../Screens/Reminder';
+import Reminder from '../../Screens/Reminder';
 import Setting from '../../Screens/Setting';
 import { RootTabParamList } from '../../Types/navigation';
 import { HomeNavigationProps } from './types';
@@ -59,7 +59,7 @@ import { HomeNavigationProps } from './types';
         <Tab.Screen name={SCREEN_CONSTANTS.Note} component={Note}/>
         <Tab.Screen
           name={SCREEN_CONSTANTS.Extra2}
-          component={Extar2}
+          component={Reminder}
           initialParams={{parentNavigation}}
         />
         <Tab.Screen name={SCREEN_CONSTANTS.Setting} component={Setting}/>

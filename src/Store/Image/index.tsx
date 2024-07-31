@@ -26,8 +26,8 @@ const image = createSlice({
         state.imageUri = imageData;
         
       }
-      AsyncStorage.setItem('Saved_Images', JSON.stringify(state.imageUri));
-      uploadPhoto(uri,uid,noteId)
+      // AsyncStorage.setItem('Saved_Images', JSON.stringify(state.imageUri));
+      // uploadPhoto(uri,uid,noteId)
     },
     deleteImage: (state, action) => {},
     getFromAsyncStorage: (state, action) => {

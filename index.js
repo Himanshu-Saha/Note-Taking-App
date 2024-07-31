@@ -12,7 +12,7 @@ import database from '@react-native-firebase/database';
 import firestore from '@react-native-firebase/firestore';
 
 firestore().settings({
-  persistence: true,
+  persistence: false,
 });
-database().setPersistenceEnabled(true);
+database().setPersistenceEnabled(false);
 AppRegistry.registerComponent(appName, () => App);
