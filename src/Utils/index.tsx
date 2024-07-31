@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
+import storage from "@react-native-firebase/storage";
 import ImageResizer from "react-native-image-resizer";
 import { NativeStackNavigationConfig } from "react-native-screens/lib/typescript/native-stack/types";
 import { Dispatch, UnknownAction } from "redux";
@@ -16,7 +17,6 @@ import { AppDispatch } from "../Store";
 import { logIn, updateUser } from "../Store/Common";
 import { RootStackScreenProps } from "../Types/navigation";
 import { Note, valuesTypes } from "./types";
-
 export const logInUser = async (
   email: string,
   password: string,
@@ -160,22 +160,6 @@ export const SignupSchema = Yup.object().shape({
     .required(YUP_STRINGS.CONFIRM_PASSWORD),
 });
 
-export const imageCompressor = async (photo: string) => {
-  try {
-    const compressedImage = await ImageResizer.createResizedImage(
-      photo,
-      600, // max width
-      400, // max height
-      "JPEG",
-      80
-    );
-    return compressedImage.uri;
-  } catch (error) {
-    // console.log('Image compression error:', error);
-    throw error;
-  }
-};
-
 export const fetchAllData = async (uid: string) => {
   try {
     await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).get();
@@ -231,6 +215,7 @@ export const fetchNotesWithLabel = async (
       noteId: note.id,
       content: note.data().content,
       labelRef: note.data().label,
+      labelId:note.data().label.id,
       labelName,
       title: note.data().title,
       time_stamp: note.data().time_stamp,
@@ -285,6 +270,18 @@ export const updateNote = async (
     });
 };
 
+export const deleteNote = async (
+  uid: string,
+  noteId: string,
+  labelId: string
+) => {
+  const userRef = firestore().collection(FIREBASE_STRINGS.USER).doc(uid);
+  const noteRef = userRef.collection(FIREBASE_STRINGS.NOTES).doc(noteId);
+  const labelRef = userRef.collection(FIREBASE_STRINGS.LABELS).doc(labelId);
+  await labelRef.update({ count: firestore.FieldValue.increment(-1) });
+  await noteRef.delete();
+};
+
 export const createLabel = async (uid: string, labelName: string) => {
   await firestore()
     .collection(FIREBASE_STRINGS.USER)
@@ -297,7 +294,11 @@ export const createLabel = async (uid: string, labelName: string) => {
     });
 };
 
-export const updateLabel = async (uid: string,labelId:string, labelName: string) => {
+export const updateLabel = async (
+  uid: string,
+  labelId: string,
+  labelName: string
+) => {
   await firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
@@ -317,21 +318,68 @@ export const deleteLabel = async (uid: string, labelId: string) => {
     .collection(FIREBASE_STRINGS.LABELS)
     .doc(labelId);
   batch.delete(labelRef);
-  const notesRef =  firestore()
-   .collection(FIREBASE_STRINGS.USER)
-   .doc(uid)
-   .collection(FIREBASE_STRINGS.NOTES)
-   .where(FIREBASE_STRINGS.LABEL,'==',labelRef);
-  const notesRefList = await notesRef.get().then((querySnapshot) => {
-    const docRefs = querySnapshot.docs.map((doc) => doc.ref);
-    return docRefs;
- })
- .catch((error) => {
-    console.error('Error getting documents: ', error);
-    return [];
- });
- notesRefList.forEach(element => {
-  batch.delete(element);
- });
- await batch.commit();
+  const notesRef = firestore()
+    .collection(FIREBASE_STRINGS.USER)
+    .doc(uid)
+    .collection(FIREBASE_STRINGS.NOTES)
+    .where(FIREBASE_STRINGS.LABEL, "==", labelRef);
+  const notesRefList = await notesRef
+    .get()
+    .then((querySnapshot) => {
+      const docRefs = querySnapshot.docs.map((doc) => doc.ref);
+      return docRefs;
+    })
+    .catch((error) => {
+      console.error("Error getting documents: ", error);
+      return [];
+    });
+  notesRefList.forEach((element) => {
+    batch.delete(element);
+  });
+  await batch.commit();
+};
+
+export const imageCompressor = async (photo: string) => {
+  try {
+    const compressedImage = await ImageResizer.createResizedImage(
+      photo,
+      600, // max width
+      400, // max height
+      "JPEG",
+      80
+    );
+    return compressedImage.uri;
+  } catch (error) {
+    // console.log('Image compression error:', error);
+    throw error;
+  }
+};
+
+export const uploadImage = async () => {};
+
+export const uploadImages = async (
+  uid: string,
+  noteId: string,
+  imageURL: string[]
+) => {
+  if (!imageURL || imageURL.length > 0) {
+    console.log("Empty imageURL");
+    return;
+  }
+  const uploadedImageURLs = await Promise.all(
+    imageURL.map(async (image) => {
+      const photoName = image.split("/").pop();
+      const uniqueId = `${uid}/${noteId}/${new Date().getTime()}-${photoName}`;
+      const reference = storage().ref(uniqueId);
+      await reference.putFile(image);
+      return reference.getDownloadURL();
+    })
+  );
+  await firestore()
+    .collection(FIREBASE_STRINGS.USER)
+    .doc(uid)
+    .collection(FIREBASE_STRINGS.NOTES)
+    .doc(noteId)
+    .update({ url: uploadedImageURLs });
+  console.log("images uploaded successfully");
 };

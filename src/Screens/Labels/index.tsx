@@ -1,4 +1,3 @@
-import firestore from "@react-native-firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,14 +6,11 @@ import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import StaggedLabel from "../../Components/Staggered";
 import { SCREEN_CONSTANTS } from "../../Constants";
-import { STRINGS, STRINGS_FIREBASE } from "../../Constants/Strings";
-import {
-  InterstitialAd
-} from "../../Shared/Services/NativeModules";
+import { STRINGS } from "../../Constants/Strings";
+import { useFetchUpdatedLabelData } from "../../Hooks/firebase";
+import { fetchNotesWithLabel } from "../../Utils";
 import { styles } from "./style";
 import { LabelProps, labelNotesDataType } from "./types";
-import { fetchNotesWithLabel } from "../../Utils";
-import { useFetchUpdatedLabelData } from "../../Hooks/firebase";
 
 function Label({ navigation, route, theme }: LabelProps) {
   const [searchData, setSearchData] = useState<labelNotesDataType>([]);
@@ -55,6 +51,7 @@ function Label({ navigation, route, theme }: LabelProps) {
   const addNewNote = () => {
     navigation.navigate(SCREEN_CONSTANTS.Note, { note });
   };
+  
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}

@@ -3,8 +3,6 @@ import { Alert, SafeAreaView, Text, View } from "react-native";
 import { useDispatch } from "react-redux";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import CustomButton from "../../Components/Button/customButton";
 import FormikTemplate from "../../Components/FormikTemplate";
 import withTheme from "../../Components/HOC";

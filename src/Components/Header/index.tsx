@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
+  Alert,
   Pressable,
   Text,
   TextInput,
@@ -19,7 +20,9 @@ import { headerTypes } from './types';
   notesData,
   handleSetInittialOnBlur,
   headerText,
-  theme
+  theme,
+  showDelete,
+  handleDelete
 }:headerTypes) {
   const navigation = useNavigation();
   const [isFocussed, setIsFocused] = useState(false);
@@ -35,7 +38,6 @@ import { headerTypes } from './types';
       else 
       return headerText
   }
-  
   return (
     
       <View style={styles.container}>
@@ -48,7 +50,7 @@ import { headerTypes } from './types';
         </Pressable>
         {!isFocussed && (
           <View>
-            {/* <Text style={[styles.headerText,{color:THEME?.TEXT4}]} onPress={()=>Alert.alert(headerText)}>{label()}</Text> */}
+            <Text style={[styles.headerText,{color:THEME?.TEXT4}]} onPress={()=>Alert.alert(headerText)}>{label()}</Text>
           </View>
         )}
         <View
@@ -82,7 +84,13 @@ import { headerTypes } from './types';
               />}
             </TouchableOpacity>
           )}
+          {showDelete && (
+            <View style={{alignSelf:'flex-end',paddingRight:10}}>
+              <Icon icon={ICONS.DELETE} width={22} height={22} action={handleDelete}/>
+            </View>
+          )}
         </View>
+
       </View>
     
   );

@@ -6,7 +6,7 @@ import { ICONS } from '../../Constants/Icons';
 import { userImageProps } from './types';
 
 
-export default function UserImage({photo,setPhoto}:userImageProps) {
+export default function ImagePicker({photo,setPhoto}:userImageProps) {
   
   const handleImagePicker = () => {
     async function launch() {

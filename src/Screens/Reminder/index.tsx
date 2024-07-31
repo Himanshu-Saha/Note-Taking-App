@@ -10,7 +10,7 @@ import { fetchReminderData } from "../../Firebase Utils";
 import { styles } from "./style";
 import { ReminderProps, reminderFormate, reminderNotesDataType } from "./types";
 
-function Extar2({ navigation, theme, route }: ReminderProps) {
+function Reminder({ navigation, theme, route }: ReminderProps) {
   const [searchData, setSearchData] = useState<reminderNotesDataType | null>();
   const [notesData, setNotesData] = useState<reminderNotesDataType | null>();
   const [noData, setNoData] = useState<boolean>(false);
@@ -120,4 +120,4 @@ function Extar2({ navigation, theme, route }: ReminderProps) {
   );
 }
 
-export default withTheme(Extar2);
+export default withTheme(Reminder);

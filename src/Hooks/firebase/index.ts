@@ -41,6 +41,7 @@ export const useFetchUpdatedLabelData = (labelId: string,labelName:string, userI
               noteId: note.id,
               content: note.data().content,
               labelRef: note.data().label,
+              labelId:note.data().label.id,
               title: note.data().title,
               time_stamp: note.data().time_stamp,
               ImageUrl: note.data().url,
