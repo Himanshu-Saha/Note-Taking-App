@@ -15,34 +15,26 @@ import Enter from "../../Screens/MainScreen";
 import Note from "../../Screens/Note";
 import SignUp from "../../Screens/SignUp";
 import Splash from "../../Screens/SplashScreen";
-import { useAppDispatch } from "../../Store";
+import { RootState, useAppDispatch } from "../../Store";
 import { setConnectionStatus } from "../../Store/Image";
 import { loadThemeFromStorage } from "../../Store/Theme";
 import { RootStackParamList } from "../../Types/navigation";
 import HomeNavigation from "../HomeNavigation";
 import { authNavigationProps, commonState, imageState } from "./types";
+import { useNetworkAvailable } from "../../Hooks/network";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function AuthNavigation({ theme }: authNavigationProps) {
-  const isConnected = useSelector(
-    (state: imageState) => state.image.isConnected
-  );
   const isLoggedIn = useSelector(
     (state: commonState) => state.common.isLogedIn
   );
   const Stack = createNativeStackNavigator<RootStackParamList>();
-  const dispatch = useAppDispatch();
-  useEffect(() => {
-    dispatch(loadThemeFromStorage());
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      dispatch(setConnectionStatus(state.isConnected));
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [dispatch]);
   const user = auth().currentUser?.uid;
-  useFirebaseListener(user?? '');
+
+  const dispatch = useAppDispatch();
+  useNetworkAvailable(dispatch);
+  const uid = useSelector((state:RootState)=>state.common.user);
+  // if(!user)  AsyncStorage.clear()
   return (
     <NavigationContainer>
       <Stack.Navigator
