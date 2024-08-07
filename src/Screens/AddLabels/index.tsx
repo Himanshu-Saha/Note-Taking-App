@@ -1,23 +1,36 @@
-import { default as auth } from "@react-native-firebase/auth";
+import { useRealm } from "@realm/react";
 import React, { useEffect, useState } from "react";
 import { FlatList, SafeAreaView, View } from "react-native";
+import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import ListTemplate from "../../Components/ListTemplate/listTemplate";
-import { useUpdateLabel } from "../../Hooks/firebase";
-import { fetchLabels } from "../../Utils";
+import { Label } from "../../RealmDB";
+import { RootState } from "../../Store";
 import { styles } from "./style";
 import { addLabelProp } from "./types";
 
 function ADD_LABELS({ theme }: addLabelProp) {
-  const [notesData, setNotesData] = useState();
-  const user = auth().currentUser;
+  const user = useSelector((state: RootState) => state.common.user);
+  const realm = useRealm();
+  const uid = user?.uid;
+  const [label, setLabel] = useState<Label[]>();
   const THEME = theme;
-  let uid = user?.uid;
+  // useEffect(() => {
+  //   if (uid) fetchLabels(uid).then((data) => setNotesData(data));
+  // }, []);
+  // useUpdateLabel(uid, setNotesData);
   useEffect(() => {
-    if (uid) fetchLabels(uid).then((data) => setNotesData(data));
-  }, []);
-  useUpdateLabel(uid, setNotesData);
+    const labels = realm.objects<Label>('Label').sorted('timestamp', true); // true for descending order
+    const updateLabels = () => {
+      setLabel([...labels]);
+    };
+    updateLabels();
+    labels.addListener(() => updateLabels());
+    return () => {
+      labels.removeListener(updateLabels);
+    };
+  }, [realm]);
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}
@@ -32,11 +45,11 @@ function ADD_LABELS({ theme }: addLabelProp) {
         </View>
         <View style={styles.labelContainer}>
           <FlatList
-            data={notesData}
+            data={label}
             style={styles.list}
-            keyExtractor={(item) => item.labelId}
+            keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => <ListTemplate note={item} label={true} uid={uid}/>}
+            renderItem={({ item }) => <ListTemplate label={item} isEditLable={true}/>}
           ></FlatList>
         </View>
       </View>

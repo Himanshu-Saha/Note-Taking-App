@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import React, { useState } from "react";
+import React from "react";
 import {
   Alert,
   SafeAreaView,
@@ -14,29 +14,30 @@ import ToggleSwitch from "toggle-switch-react-native";
 import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import { SCREEN_CONSTANTS } from "../../Constants";
+import { DEVICE_THEME } from "../../Constants/Colors";
 import { STRINGS } from "../../Constants/Strings";
+import { RootState } from "../../Store";
 import { updateLogIn, updateUser } from "../../Store/Common";
 import { toggleTheme } from "../../Store/Theme";
 import { styles } from "./style";
-import { SettingProps, themeState } from "./types";
-import { DEVICE_THEME } from "../../Constants/Colors";
+import { SettingProps } from "./types";
 
-function Setting({ navigation, theme }:SettingProps) {
+function Setting({ navigation, theme }: SettingProps) {
   const dispatch = useDispatch();
 
-  const isThemeOn = useSelector((state:themeState) => state.theme.theme);
-  const user = auth().currentUser;
+  const isThemeOn = useSelector((state: RootState) => state.theme.theme);
+  const user = useSelector((state: RootState) => state.common.user);
   const THEME = theme;
-  
+
   const signOut = async () => {
     try {
-      if (user?.providerData[0].providerId !== "google.com") {
+      if (user?.providerId !== "google.com") {
         await auth()
           .signOut()
           .catch((e) => console.log(e));
         dispatch(updateLogIn(false));
         dispatch(updateUser(null));
-        await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(false));
+        // await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(false));
         AsyncStorage.clear();
         navigation.navigate(SCREEN_CONSTANTS.Enter);
       } else {
@@ -48,7 +49,9 @@ function Setting({ navigation, theme }:SettingProps) {
             STRINGS.IS_LOGGED_IN,
             JSON.stringify(false)
           )
-          AsyncStorage.clear();
+          await AsyncStorage.clear().then(() =>
+            console.log("clear")
+          ).catch((e) => console.log(e, "async erroe"));
           navigation.navigate(SCREEN_CONSTANTS.Enter);
         } catch (error) {
           console.error(error);
@@ -75,109 +78,107 @@ function Setting({ navigation, theme }:SettingProps) {
   };
 
   return (
-    
-      <SafeAreaView
-        style={[
-          styles.container,
-          {
-            backgroundColor: THEME.BACKGROUND,
-          },
-        ]}
-      >
-        <View>
-          <Search headerText={STRINGS.SETTINGS} />
-        </View>
-        <View style={styles.subContainer}>
-          <View
-            style={[
-              styles.box1,
-              {
-                backgroundColor: THEME.SETTING_BOX,
-              },
-            ]}
-          >
-            <View style={styles.view}>
-              <View>
-                <Text
-                  style={[
-                    styles.text,
-                    {
-                      color: THEME.TEXT1,
-                    },
-                  ]}
-                >
-                  {STRINGS.SETTING.CHANGE_PROFILE}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.view}>
-              <View>
-                <Text
-                  style={[
-                    styles.text,
-                    {
-                      color: THEME.TEXT1,
-                    },
-                  ]}
-                >
-                  {STRINGS.THEME}
-                </Text>
-              </View>
-              <View>
-                <ToggleSwitch
-                  isOn={isThemeOn === DEVICE_THEME.DARK}
-                  onColor="black"
-                  circleColor={THEME.BACKGROUND1}
-                  offColor="white"
-                  labelStyle={{ color: "black", fontWeight: "900" }}
-                  size="medium"
-                  onToggle={() => dispatch(toggleTheme())}
-                />
-              </View>
-            </View>
-            <View style={styles.view}>
-              <View>
-                <Text
-                  style={[
-                    styles.text,
-                    {
-                      color: THEME.TEXT1,
-                    },
-                  ]}
-                >
-                  {STRINGS.SETTING.CHANGE_PASSWORD}
-                </Text>
-              </View>
-            </View>
-          </View>
-          {/* Other settings items */}
-          <TouchableOpacity onPress={SignOutAlert}>
-            <View
-              style={[
-                styles.box1,
-                styles.box2,
-                {
-                  backgroundColor: THEME.SETTING_BOX,
-                },
-              ]}
-            >
+    <SafeAreaView
+      style={[
+        styles.container,
+        {
+          backgroundColor: THEME.BACKGROUND,
+        },
+      ]}
+    >
+      <View>
+        <Search headerText={STRINGS.SETTINGS} />
+      </View>
+      <View style={styles.subContainer}>
+        <View
+          style={[
+            styles.box1,
+            {
+              backgroundColor: THEME.SETTING_BOX,
+            },
+          ]}
+        >
+          <View style={styles.view}>
+            <View>
               <Text
                 style={[
                   styles.text,
                   {
                     color: THEME.TEXT1,
                   },
-                  // styles.textBold,
                 ]}
               >
-                {STRINGS.SIGN_OUT}
+                {STRINGS.SETTING.CHANGE_PROFILE}
               </Text>
-              {/* </View> */}
             </View>
-          </TouchableOpacity>
+          </View>
+          <View style={styles.view}>
+            <View>
+              <Text
+                style={[
+                  styles.text,
+                  {
+                    color: THEME.TEXT1,
+                  },
+                ]}
+              >
+                {STRINGS.THEME}
+              </Text>
+            </View>
+            <View>
+              <ToggleSwitch
+                isOn={isThemeOn === DEVICE_THEME.DARK}
+                onColor="black"
+                circleColor={THEME.BACKGROUND1}
+                offColor="white"
+                labelStyle={{ color: "black", fontWeight: "900" }}
+                size="medium"
+                onToggle={() => dispatch(toggleTheme())}
+              />
+            </View>
+          </View>
+          <View style={styles.view}>
+            <View>
+              <Text
+                style={[
+                  styles.text,
+                  {
+                    color: THEME.TEXT1,
+                  },
+                ]}
+              >
+                {STRINGS.SETTING.CHANGE_PASSWORD}
+              </Text>
+            </View>
+          </View>
         </View>
-      </SafeAreaView>
-    
+        {/* Other settings items */}
+        <TouchableOpacity onPress={SignOutAlert}>
+          <View
+            style={[
+              styles.box1,
+              styles.box2,
+              {
+                backgroundColor: THEME.SETTING_BOX,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.text,
+                {
+                  color: THEME.TEXT1,
+                },
+                // styles.textBold,
+              ]}
+            >
+              {STRINGS.SIGN_OUT}
+            </Text>
+            {/* </View> */}
+          </View>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 export default withTheme(Setting);

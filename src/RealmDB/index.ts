@@ -1,4 +1,4 @@
-import Realm, { BSON, schemaVersion } from "realm";
+import Realm from "realm";
 
 export class Note extends Realm.Object<Note> {
   _id!: string;
@@ -24,7 +24,7 @@ export class Note extends Realm.Object<Note> {
 
 export class Label extends Realm.Object<Label> {
   _id!: string;
-  name!: string;
+  label!: string;
   count!: number;
   timestamp!: Date;
 
@@ -37,6 +37,46 @@ export class Label extends Realm.Object<Label> {
       count: "int",
       timestamp: "date",
     },
+  };
+}
+
+// offline schema
+export class OfflineLabel extends Realm.Object<Label> {
+  _id!: string;
+  label!: string;
+  count!: number;
+  timestamp!: Date;
+
+  static schema: Realm.ObjectSchema = {
+    primaryKey: "_id",
+    name: "Label",
+    properties: {
+      _id: "string",
+      label: "string",
+      count: "int",
+      timestamp: "date",
+    },
+  };
+}
+export class OfflineNote extends Realm.Object<Note> {
+  _id!: string;
+  title?: string;
+  content?: string;
+  label!: string;
+  imagesURL?: string[];
+  timestamp!: Date;
+
+  static schema: Realm.ObjectSchema = {
+    name: "Note",
+    properties: {
+      _id: "string",
+      title: "string",
+      content: "string",
+      label: "string",
+      imagesURL: "string[]",
+      timestamp: "date",
+    },
+    primaryKey: "_id",
   };
 }
 

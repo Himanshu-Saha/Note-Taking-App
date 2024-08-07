@@ -4,7 +4,7 @@ import firestore from "@react-native-firebase/firestore";
 import storage from "@react-native-firebase/storage";
 import ImageResizer from "react-native-image-resizer";
 import { NativeStackNavigationConfig } from "react-native-screens/lib/typescript/native-stack/types";
-import { Dispatch, UnknownAction } from "redux";
+import { UpdateMode } from "realm";
 import * as Yup from "yup";
 import { SCREEN_CONSTANTS } from "../Constants";
 import {
@@ -17,8 +17,6 @@ import { AppDispatch } from "../Store";
 import { updateLogIn, updateProvider, updateUser } from "../Store/Common";
 import { RootStackScreenProps } from "../Types/navigation";
 import { Note, valuesTypes } from "./types";
-import { useRealm } from "@realm/react";
-import { BSON, RealmObjectConstructor, UpdateMode } from "realm";
 export const logInUser = async (
   email: string,
   password: string,
@@ -29,9 +27,9 @@ export const logInUser = async (
       email,
       password
     );
-    dispatch(updateLogIn(true))
-    dispatch(updateUser(userCredential.user.uid))
-    dispatch(updateProvider('firebase'));
+    dispatch(updateLogIn(true));
+    dispatch(updateUser(userCredential.user.uid));
+    dispatch(updateProvider("firebase"));
     await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true));
   } catch (error) {
     console.error(error);
@@ -53,7 +51,7 @@ export const createUser = async (
     });
     signUpUser(userCredentials.user, navigation);
   } catch (error) {
-    console.error('Error creating account:', error.code, error.message);
+    console.error("Error creating account:", error.code, error.message);
   }
 };
 
@@ -209,7 +207,7 @@ export const fetchNotesWithLabel = async (
       noteId: note.id,
       content: note.data().content,
       labelRef: note.data().label,
-      labelId:note.data().label.id,
+      labelId: note.data().label.id,
       labelName,
       title: note.data().title,
       time_stamp: note.data().time_stamp,
@@ -225,28 +223,25 @@ export const createNote = async (
   labelId: string,
   title: string,
   content: string,
-  imageURL:string[]
+  imageURL: string[]
 ) => {
   const labelRef = firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
     .collection(FIREBASE_STRINGS.LABELS)
     .doc(labelId);
-  const newNoteRef = await firestore()
+  const newNoteRef = firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
     .collection(FIREBASE_STRINGS.NOTES)
     .doc();
-    const URL = await uploadImages(uid, newNoteRef.id, imageURL).catch((e) =>
-      console.log(e)
-    );
-   await newNoteRef.set({
-      label: labelRef,
-      title: title,
-      content: content,
-      time_stamp: firestore.FieldValue.serverTimestamp(),
-      url: URL,
-    });
+  await newNoteRef.set({
+    label: labelRef,
+    title: title,
+    content: content,
+    time_stamp: firestore.FieldValue.serverTimestamp(),
+    url: imageURL,
+  });
   await labelRef.update({ count: firestore.FieldValue.increment(1) });
 };
 
@@ -276,6 +271,12 @@ export const deleteNote = async (
   const userRef = firestore().collection(FIREBASE_STRINGS.USER).doc(uid);
   const noteRef = userRef.collection(FIREBASE_STRINGS.NOTES).doc(noteId);
   const labelRef = userRef.collection(FIREBASE_STRINGS.LABELS).doc(labelId);
+  const labelDoc = await labelRef.get();
+  console.log(uid,noteId,labelId);
+  if (!labelDoc.exists) {
+    console.error(`Label with ID ${labelId} does not exist.`);
+    return; // Or handle it as needed
+  }
   await labelRef.update({ count: firestore.FieldValue.increment(-1) });
   await noteRef.delete();
 };
@@ -363,7 +364,7 @@ export const uploadImages = async (
   if (!imageURL || imageURL.length === 0) {
     console.log("Empty imageURL");
     return;
-  }  
+  }
   const uploadedImageURLs = await Promise.all(
     imageURL.map(async (image) => {
       const photoName = image.split("/").pop();
@@ -373,7 +374,7 @@ export const uploadImages = async (
       return reference.getDownloadURL();
     })
   );
-  return uploadedImageURLs
+  return uploadedImageURLs;
   // await firestore()
   //   .collection(FIREBASE_STRINGS.USER)
   //   .doc(uid)
@@ -385,39 +386,53 @@ export const uploadImages = async (
 
 // realm and firestore
 
-export async function syncFirestoreToRealm(uid:string,realmInstance:Realm) {
-  const notesSnapshot = await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).collection(FIREBASE_STRINGS.NOTES).get();
-  const labelsSnapshot = await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).collection(FIREBASE_STRINGS.LABELS).get();
+export async function syncFirestoreToRealm(uid: string, realmInstance: Realm) {
+  const notesSnapshot = await firestore()
+    .collection(FIREBASE_STRINGS.USER)
+    .doc(uid)
+    .collection(FIREBASE_STRINGS.NOTES)
+    .get();
+  const labelsSnapshot = await firestore()
+    .collection(FIREBASE_STRINGS.USER)
+    .doc(uid)
+    .collection(FIREBASE_STRINGS.LABELS)
+    .get();
   realmInstance.write(() => {
-    notesSnapshot.docs.forEach(note => {
-      const data = note.data();
-      realmInstance.create('Note', {
-        _id: note.id,
-        title: data.title,
-        content: data.content,
-        label: data.label.id,
-        imagesURL: data.url,
-        timestamp: data.time_stamp.toDate(),
-      }, UpdateMode.Modified);
+    notesSnapshot.docs.forEach((note) => {
+      const data = note.data();      
+      realmInstance.create(
+        "Note",
+        {
+          _id: note.id,
+          title: data.title,
+          content: data.content,
+          label: data.label.id,
+          imagesURL: data.url,
+          timestamp: data.time_stamp.toDate(),
+        },
+        UpdateMode.Modified
+      );
     });
-    labelsSnapshot.forEach(doc => {
+    labelsSnapshot.forEach((doc) => {
       const data = doc.data();
-      realmInstance.create('Label', {
-        _id: doc.id,
-        label: data.label,
-        count: data.count,
-        timestamp: data.time_stamp.toDate(),
-      }, UpdateMode.Modified);
+      realmInstance.create(
+        "Label",
+        {
+          _id: doc.id,
+          label: data.label,
+          count: data.count,
+          timestamp: data.time_stamp.toDate(),
+        },
+        UpdateMode.Modified
+      );
     });
   });
 }
 
-export async function syncRealmToFirestore(uid:string, realmInstance:Realm) {
-  const notes = realmInstance.objects('Note');
-  const labels = realmInstance.objects('Label');
-  console.log(notes,'note');
-  console.log(labels,'labels');
-  
+export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
+  const notes = realmInstance.objects("Note");
+  const labels = realmInstance.objects("Label");
+
   // notes.forEach(note => {
   //   firestore().collection(FIREBASE_STRINGS.USER).doc(uid).collection(FIREBASE_STRINGS.NOTES).doc(note._id.toString()).set({
   //     _id: note._id,

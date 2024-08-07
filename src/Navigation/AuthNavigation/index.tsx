@@ -1,13 +1,13 @@
-import NetInfo from "@react-native-community/netinfo";
-import { default as auth } from "@react-native-firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useRealm } from "@realm/react";
 import { useEffect } from "react";
 import { heightPercentageToDP } from "react-native-responsive-screen";
 import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import { SCREEN_CONSTANTS } from "../../Constants";
-import { useFirebaseListener } from "../../Hooks/firebase";
+import { useNetworkAvailable } from "../../Hooks/network";
 import ForgotPassword from "../../Screens/ForgotPassword";
 import Label from "../../Screens/Labels";
 import LogIn from "../../Screens/LogIn";
@@ -16,25 +16,56 @@ import Note from "../../Screens/Note";
 import SignUp from "../../Screens/SignUp";
 import Splash from "../../Screens/SplashScreen";
 import { RootState, useAppDispatch } from "../../Store";
-import { setConnectionStatus } from "../../Store/Image";
-import { loadThemeFromStorage } from "../../Store/Theme";
+import { updateLogIn, updateUser } from "../../Store/Common";
 import { RootStackParamList } from "../../Types/navigation";
+import { syncFirestoreToRealm } from "../../Utils";
 import HomeNavigation from "../HomeNavigation";
-import { authNavigationProps, commonState, imageState } from "./types";
-import { useNetworkAvailable } from "../../Hooks/network";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authNavigationProps } from "./types";
 
 function AuthNavigation({ theme }: authNavigationProps) {
-  const isLoggedIn = useSelector(
-    (state: commonState) => state.common.isLogedIn
-  );
-  const Stack = createNativeStackNavigator<RootStackParamList>();
-  const user = auth().currentUser?.uid;
-
+  const realm = useRealm();
   const dispatch = useAppDispatch();
+  const isLoggedIn = useSelector((state: RootState) => state.common.isLogedIn);
+  const Stack = createNativeStackNavigator<RootStackParamList>();
+  const user = useSelector((state: RootState) => state.common.user);
+  const isConnected = useSelector(
+    (state: RootState) => state.network.isAvailable
+  );
+  async function test() {
+    const storage = await AsyncStorage.getItem("User");
+    console.log(storage, "storage");
+  }
+
   useNetworkAvailable(dispatch);
-  const uid = useSelector((state:RootState)=>state.common.user);
-  // if(!user)  AsyncStorage.clear()
+  useEffect(() => {
+    AsyncStorage.getItem("User").then((user) => {
+      if (user) {
+        const data = JSON.parse(user);
+        dispatch(updateUser(data));
+      } else {
+        dispatch(updateUser(null));
+      }
+    });
+    AsyncStorage.getItem("isLogedIn").then((flag) => {
+      if (flag) {
+        JSON.parse(flag);
+        dispatch(updateLogIn(flag));
+      } else dispatch(updateLogIn(false));
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user?.uid) console.log("user?.uid missing auth page");
+    else if (isLoggedIn && isConnected && user?.uid) {
+      syncFirestoreToRealm(user?.uid, realm)
+        .then(() => {
+          console.log("syncFirestoreToRealm");
+        })
+        .catch((e) => {
+          console.log(e, "Error: syncFirestoreToRealm");
+        });
+    } else console.log("not connected to any network");
+  }, [isConnected]);
   return (
     <NavigationContainer>
       <Stack.Navigator

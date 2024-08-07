@@ -1,30 +1,32 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import auth from "@react-native-firebase/auth";
 import {
   GoogleSignin,
   statusCodes,
-} from '@react-native-google-signin/google-signin';
-import { useNavigation } from '@react-navigation/native';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+} from "@react-native-google-signin/google-signin";
+import { useNavigation } from "@react-navigation/native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { heightPercentageToDP } from "react-native-responsive-screen";
+import { useDispatch } from "react-redux";
+import { SCREEN_CONSTANTS } from "../../Constants";
+import { ICONS } from "../../Constants/Icons";
+import { PLATEFORM, STRINGS } from "../../Constants/Strings";
+import { updateLogIn, updateUser } from "../../Store/Common";
 import {
-  heightPercentageToDP
-} from 'react-native-responsive-screen';
-import { useDispatch } from 'react-redux';
-import { SCREEN_CONSTANTS } from '../../Constants';
-import { ICONS } from '../../Constants/Icons';
-import { PLATEFORM, STRINGS } from '../../Constants/Strings';
-import { updateLogIn, updateProvider, updateUser, updateUserProfileURL } from '../../Store/Common';
-import { RootStackParamList, RootStackScreenProps } from '../../Types/navigation';
-import { signUpUser } from '../../Utils';
-import { styles } from './style';
+  RootStackParamList,
+  RootStackScreenProps,
+} from "../../Types/navigation";
+import { signUpUser } from "../../Utils";
+import { styles } from "./style";
 
 export default function Google() {
   const dispatch = useDispatch();
-  const navigation = useNavigation<RootStackScreenProps<keyof RootStackParamList>>();
+  const navigation =
+    useNavigation<RootStackScreenProps<keyof RootStackParamList>>();
 
   GoogleSignin.configure({
     webClientId:
-      '963157051833-a1elv0njn1tu58p9fjnfe8277bi2aj6c.apps.googleusercontent.com',
+      "963157051833-a1elv0njn1tu58p9fjnfe8277bi2aj6c.apps.googleusercontent.com",
   });
 
   const _signIn = async () => {
@@ -32,15 +34,24 @@ export default function Google() {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       if (userInfo) {
-        const googleCredential = auth.GoogleAuthProvider.credential(userInfo.idToken);
+        const googleCredential = auth.GoogleAuthProvider.credential(
+          userInfo.idToken
+        );
         const ans = await auth().signInWithCredential(googleCredential);
         if (ans.additionalUserInfo?.isNewUser) {
           signUpUser(ans.user, navigation);
-          console.log('hello noob');
+          console.log("hello noob");
         } else {
-          dispatch(updateUser(ans.user)); 
-          dispatch(updateLogIn(true));            
-          await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true));
+          dispatch(updateUser(ans.user));
+          dispatch(updateLogIn(true));
+          await AsyncStorage.setItem(
+            STRINGS.IS_LOGGED_IN,
+            JSON.stringify(true)
+          );
+          await AsyncStorage.setItem(
+            "User",
+            JSON.stringify(ans.user)
+          );
           navigation.navigate(SCREEN_CONSTANTS.HomeNavigation);
         }
       } else {
@@ -59,7 +70,7 @@ export default function Google() {
             // console.log('Play services not available or outdated');
             break;
           default:
-            // console.log('Some other error happened', error);
+          // console.log('Some other error happened', error);
         }
       } else {
         // console.log('An error not related to Google sign-in occurred', error);
@@ -72,9 +83,13 @@ export default function Google() {
       <TouchableOpacity onPress={_signIn}>
         <View style={styles.googleContainer}>
           {ICONS.GOOGLE(
-            Platform.OS == PLATEFORM.IOS ? heightPercentageToDP('2%') : heightPercentageToDP('2.5%'),
-            Platform.OS == PLATEFORM.IOS ? heightPercentageToDP('2%') : heightPercentageToDP('2.5%'),
-            'none',
+            Platform.OS == PLATEFORM.IOS
+              ? heightPercentageToDP("2%")
+              : heightPercentageToDP("2.5%"),
+            Platform.OS == PLATEFORM.IOS
+              ? heightPercentageToDP("2%")
+              : heightPercentageToDP("2.5%"),
+            "none"
           )}
           <Text style={styles.text}>{STRINGS.GOOGLE_SIGN_IN}</Text>
         </View>

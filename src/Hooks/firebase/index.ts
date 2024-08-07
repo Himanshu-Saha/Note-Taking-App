@@ -1,35 +1,35 @@
 import firestore from "@react-native-firebase/firestore";
 import { useEffect } from "react";
+import { UpdateMode } from "realm";
 import { FIREBASE_STRINGS } from "../../Constants/Strings";
-import { RealmClassType } from "@realm/react/dist/helpers";
-import { useRealm } from "@realm/react";
-import { BSON, UpdateMode } from "realm";
+import { Note } from "../../RealmDB";
 // import { addNoteToRealm, updateNoteInRealm } from "../../RealmDB";
 
 export const useUpdateLabel = (
-  uid: string|undefined,
+  uid: string | undefined,
   setData: (
     key: { labelName: string; labelId: string; count: number }[]
   ) => void
 ) => {
   useEffect(() => {
-    if(uid){
-    const unsubscribe = firestore()
-      .collection(FIREBASE_STRINGS.USER)
-      .doc(uid)
-      .collection(FIREBASE_STRINGS.LABELS)
-      .orderBy(FIREBASE_STRINGS.TIME_STAMP, FIREBASE_STRINGS.ORDER)
-      .onSnapshot((querySnapshot) => {
-        const labels = querySnapshot.docs.map((item) => ({
-          labelName: item.data().label,
-          labelId: item.id,
-          count: item.data().count,
-        }));
-        setData(labels);
-      });
-    return () => {
-      unsubscribe();
-    };}
+    if (uid) {
+      const unsubscribe = firestore()
+        .collection(FIREBASE_STRINGS.USER)
+        .doc(uid)
+        .collection(FIREBASE_STRINGS.LABELS)
+        .orderBy(FIREBASE_STRINGS.TIME_STAMP, FIREBASE_STRINGS.ORDER)
+        .onSnapshot((querySnapshot) => {
+          const labels = querySnapshot.docs.map((item) => ({
+            labelName: item.data().label,
+            labelId: item.id,
+            count: item.data().count,
+          }));
+          setData(labels);
+        });
+      return () => {
+        unsubscribe();
+      };
+    }
   }, [setData, uid]);
 };
 
@@ -76,37 +76,41 @@ export const useFetchUpdatedLabelData = (
 
 export const useFirebaseListener = (userId: string) => {
   useEffect(() => {
-    if(userId){
-    const unsubscribe = firestore()
-      .collection(FIREBASE_STRINGS.USER)
-      .doc(userId)
-      .collection(FIREBASE_STRINGS.NOTES)
-      .onSnapshot((snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          const noteData = change.doc.data();
-          
-          switch (change.type) {
-            case "added":
-              // console.log(noteData,'added');
-              // console.log(noteData);
-              // addNoteToRealm(noteData);
-              break;
-            case "modified":
-              // console.log(noteData,'Updated');
-              
-              // updateNoteInRealm(noteData);
-              break;
-            // case "removed":
-            //   deleteNoteFromRealm(noteData.id);
-            //   break;
-          }
+    if (userId) {
+      const unsubscribe = firestore()
+        .collection(FIREBASE_STRINGS.USER)
+        .doc(userId)
+        .collection(FIREBASE_STRINGS.NOTES)
+        .onSnapshot((snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            const noteData = change.doc.data();
+
+            switch (change.type) {
+              case "added":
+                // console.log(noteData,'added');
+                // console.log(noteData);
+                // addNoteToRealm(noteData);
+                break;
+              case "modified":
+                // console.log(noteData,'Updated');
+
+                // updateNoteInRealm(noteData);
+                break;
+              // case "removed":
+              //   deleteNoteFromRealm(noteData.id);
+              //   break;
+            }
+          });
         });
-      });
-    return () => unsubscribe();}
+      return () => unsubscribe();
+    }
   }, []);
 };
 
-export const useFetchAllNotesData = (userId: string, networkAvailable: boolean) => {
+export const useFetchAllNotesData = (
+  userId: string,
+  networkAvailable: boolean
+) => {
   useEffect(() => {
     if (networkAvailable && userId) {
       firestore()
@@ -115,36 +119,47 @@ export const useFetchAllNotesData = (userId: string, networkAvailable: boolean) 
         .collection(FIREBASE_STRINGS.NOTES)
         .get()
         .then((noteData) => {
-          const data = noteData.docs.map(doc => ({...doc.data(),_id:doc.id}));
-          data.forEach((d)=>console.log(d,'data'))
+          const data = noteData.docs.map((doc) => ({
+            ...doc.data(),
+            _id: doc.id,
+          }));
+          // data.forEach((d) => console.log(d, "data"));
         })
         .catch((e) => console.log(e));
     }
   }, [networkAvailable, userId]);
 };
 
-export const useFirestoreToRealmSync = (uid: string) => {
-  const realmInstance = useRealm();
+export const useFirestoreToRealmSync = (uid: string, realmInstance: Realm) => {
   useEffect(() => {
     const unsubscribeNotes = firestore()
       .collection(FIREBASE_STRINGS.USER)
       .doc(uid)
       .collection(FIREBASE_STRINGS.NOTES)
-      .onSnapshot(snapshot => {
-        snapshot.docChanges().forEach(change => {
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
           const data = change.doc.data();
           realmInstance.write(() => {
-            if (change.type === 'added' || change.type === 'modified') {
-              realmInstance.create('Note', {
-                _id: change.doc.id,
-                title: data.title,
-                content: data.content,
-                label: data.label.id,
-                imagesURL: data.url,
-                timestamp: data.time_stamp.toDate(),
-              }, UpdateMode.Modified);
-            } else if (change.type === 'removed') {
-              const noteToDelete = realmInstance.objectForPrimaryKey('Note', new BSON.UUID(change.doc.id));
+            if (change.type === "added" || change.type === "modified") {
+              realmInstance.create(
+                "Note",
+                {
+                  _id: change.doc.id,
+                  title: data.title,
+                  content: data.content,
+                  label: data.label.id,
+                  imagesURL: data.url,
+                  timestamp: data.time_stamp
+                    ? data.time_stamp.toDate()
+                    : new Date(),
+                },
+                UpdateMode.Modified
+              );
+            } else if (change.type === "removed") {
+              const noteToDelete = realmInstance.objectForPrimaryKey(
+                "Note",
+                change.doc.id
+              );
               if (noteToDelete) {
                 realmInstance.delete(noteToDelete);
               }
@@ -157,19 +172,28 @@ export const useFirestoreToRealmSync = (uid: string) => {
       .collection(FIREBASE_STRINGS.USER)
       .doc(uid)
       .collection(FIREBASE_STRINGS.LABELS)
-      .onSnapshot(snapshot => {
-        snapshot.docChanges().forEach(change => {
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
           const data = change.doc.data();
           realmInstance.write(() => {
-            if (change.type === 'added' || change.type === 'modified') {
-              realmInstance.create('Label', {
-                _id: change.doc.id,
-                label: data.label,
-                count: data.count,
-                timestamp: data.time_stamp.toDate(),
-              }, UpdateMode.Modified);
-            } else if (change.type === 'removed') {
-              const labelToDelete = realmInstance.objectForPrimaryKey('Label', new BSON.UUID(change.doc.id));
+            if (change.type === "added" || change.type === "modified") {
+              realmInstance.create(
+                "Label",
+                {
+                  _id: change.doc.id,
+                  label: data.label,
+                  count: data.count,
+                  timestamp: data.time_stamp
+                    ? data.time_stamp.toDate()
+                    : new Date(),
+                },
+                UpdateMode.Modified
+              );
+            } else if (change.type === "removed") {
+              const labelToDelete = realmInstance.objectForPrimaryKey(
+                "Label",
+                change.doc.id
+              );
               if (labelToDelete) {
                 realmInstance.delete(labelToDelete);
               }
@@ -182,4 +206,28 @@ export const useFirestoreToRealmSync = (uid: string) => {
       unsubscribeLabels();
     };
   }, [uid, realmInstance]);
+};
+
+export const useLabelsById = (
+  id: string,
+  realm: Realm,
+  setData: (key: Note[]) => void
+) => {
+  useEffect(() => {
+    const notes = realm
+      .objects<Note>("Note")
+      .filtered("label == $0", id)
+      .sorted("timestamp", true);
+    const updateLabels = () => {
+      setData([...notes]);
+    };
+    updateLabels();
+    const labelsListener = () => {
+      updateLabels();
+    };
+    notes.addListener(labelsListener);
+    return () => {
+      notes.removeListener(labelsListener);
+    };
+  }, [realm, id]);
 };

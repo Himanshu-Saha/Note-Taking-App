@@ -1,17 +1,16 @@
 import StaggeredList from '@mindinventory/react-native-stagger-view';
 import { useNavigation } from '@react-navigation/native';
+import { Note } from '../../RealmDB';
 import ListTemplate from '../ListTemplate/listTemplate';
-import { StaggedLabelProps, itemType } from './types';
+import { StaggedLabelProps } from './types';
 
-export default function StaggedLabel({data}:StaggedLabelProps){
+export default function StaggedLabel({data,labelDetails}:StaggedLabelProps){
     const navigation = useNavigation();
-    const renderChildren = (item:itemType) => {
+    const renderChildren = (item:Note) => {
         return (
-            <ListTemplate note={item} nav={navigation} maxHeight={150} />
+            <ListTemplate note={item} maxHeight={150} labelDetails={labelDetails}/>
         );
       };
-    //   console.log(data,'test');
-      
     return (
         <StaggeredList
             data={data}

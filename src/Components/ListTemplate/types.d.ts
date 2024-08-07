@@ -1,4 +1,5 @@
 import { HTMLSource } from "react-native-render-html";
+import { Label, Note } from "../../RealmDB";
 import { themeType } from "../HOC";
 
 export interface TimestampType {
@@ -15,9 +16,10 @@ export interface NoteType {
 }
 
 export interface listTemplateTypes {
-  note: NoteType;
-  nav?: any;
+  note?: Note;
   maxHeight?: number;
-  label?: boolean;
+  label?: Label;
+  isEditLable?:boolean
   theme: themeType;
+  labelDetails?:{ labelId: string; labelName: string } 
 }

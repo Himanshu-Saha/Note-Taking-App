@@ -1,4 +1,3 @@
-import { default as auth } from "@react-native-firebase/auth";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
@@ -22,42 +21,37 @@ import {
   widthPercentageToDP,
 } from "react-native-responsive-screen";
 import { useDispatch, useSelector } from "react-redux";
-import DateTime from "../../Components/DateTime";
 import CustomDialogInput from "../../Components/DialogInput";
-import DropdownComponent from "../../Components/Dropdown/dropdown";
+import DropdownComponent from "../../Components/Dropdown";
 import withTheme from "../../Components/HOC";
 import Header from "../../Components/Header";
 import ImagePicker from "../../Components/Image";
 import { STRINGS } from "../../Constants/Strings";
-import { loadImage } from "../../Store/Image";
+import { RootState } from "../../Store";
 import {
   createNote,
   deleteNote,
   imageCompressor,
   updateNote,
-  uploadImages
 } from "../../Utils";
 import { styles } from "./styles";
-import { NoteScreenProps, imageState } from "./types";
+import { NoteScreenProps } from "./types";
 
 const Note = ({ route, theme }: NoteScreenProps) => {
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [keyboardVerticalOffset, setKeyboardVerticalOffset] = useState(0);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const imageInitData = useSelector(
-    (state: imageState) => state.image.imageUri
-  );
-
-  const user = auth().currentUser;
-  let uid = user?.uid;
+  // const imageInitData = useSelector((state: RootState) => state.image.imageUri);
+  const user = useSelector((state: RootState) => state.common.user);
+  const uid = user?.uid;
   let initialTitle = "";
   let noteId = "";
   let data = "";
   let labelId = "Others";
   let imageInitialData: string[] = [];
   let defaultLabelName = "Others";
-  const reminder = useRef(false);
+  // const reminder = useRef(false);
   const isNew = useRef(true);
   const isCompleteNew = useRef(false);
   const noteIdExist = useRef(false);
@@ -67,40 +61,40 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   const noteNewId = useRef<string | null>();
 
   if (route.params != undefined) {
-    if (route.params?.labelData != undefined) {
-      isCompleteNew.current = true;
+    if (route.params?.labelDetails != undefined && route.params?.note === undefined) {
+      labelId = route.params.labelDetails.labelId;
+      defaultLabelName = route.params.labelDetails.labelName;
     } else if (route.params?.note != undefined) {
-      if (route.params.note.noteId == undefined) {
-        labelId = route.params.note.labelId;
-        defaultLabelName = route.params.note.labelName;
-      } else {
-        data = route.params.note.content;
-        initialTitle = route.params.note.title;
-        noteId = route.params.note.noteId;
-        labelId = route.params.note.labelId;
-        defaultLabelName = route.params.note.labelName;
-        isNew.current = false;
-        noteIdExist.current = true;
-        if (imageInitData[noteId]) imageInitialData = imageInitData[noteId];
-      }
-      if (route.params.note.timestamp !== undefined) {
-        const formatDate =
-          route.params.note.timestamp.seconds * 1000 +
-          Math.floor(route.params.note.timestamp.nanoseconds / 1000000);
-        dateRef.current = new Date(formatDate);
-        reminder.current = true;
-        if (route.params.note.newReminder !== undefined) {
-          isNew.current = true;
-          dateRef.current = new Date();
-        }
-      }
+      data = route.params.note.content;
+      initialTitle = route.params.note.title;
+      noteId = route.params.note._id;
+      labelId = route.params.labelDetails.labelId;
+      defaultLabelName = route.params.labelDetails.labelName;
+      isNew.current = false;
+      noteIdExist.current = true;
+      // if (imageInitData[noteId]) imageInitialData = imageInitData[noteId];
+      imageInitialData = route.params.note.imagesURL;
+
+      // if (route.params.note.timestamp !== undefined) {
+      //   const formatDate =
+      //     route.params.note.timestamp.seconds * 1000 +
+      //     Math.floor(route.params.note.timestamp.nanoseconds / 1000000);
+      //   dateRef.current = new Date(formatDate);
+      //   reminder.current = true;
+      //   if (route.params.note.newReminder !== undefined) {
+      //     isNew.current = true;
+      //     dateRef.current = new Date();
+      //   }
+      // }
+    } else {
+      isCompleteNew.current = true;
     }
   }
-  
-  const [date, setDate] = useState(dateRef.current);
+
+  // const [date, setDate] = useState(dateRef.current);
   const [title, setTitle] = useState(initialTitle);
   const [label, setLable] = useState(labelId);
-  const [value, setValue] = useState(labelId);
+  // const [value, setValue] = useState(labelId);
   const [photo, setPhoto] = useState<string | null>(null);
   const [imageData, setImageData] = useState(imageInitialData);
   const [newImageData, setNewImageData] = useState<string[]>([]);
@@ -108,12 +102,12 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   const articleData = useRef(data);
   const labelRef = useRef(labelId);
   const titleRef = useRef(initialTitle);
-
   const THEME = theme;
+console.log(labelRef);
 
   useEffect(() => {
-    labelRef.current = value;
-  }, [value]);
+    labelRef.current = label;
+  }, [label]);
   useEffect(() => {
     if (!photo || !uid) {
       return;
@@ -131,52 +125,47 @@ const Note = ({ route, theme }: NoteScreenProps) => {
     processImage();
   }, [photo, uid]);
 
-  useEffect(() => {
-    setDate(dateRef.current);
-  }, []);
-  useEffect(() => {
-    dateRef.current = date;
-  }, [date]);
-
+  // useEffect(() => {
+  //   setDate(dateRef.current);
+  // }, []);
+  // useEffect(() => {
+  //   dateRef.current = date;
+  // }, [date]);
   const fetchData = async () => {
     if (!isNew.current) {
-      if (reminder.current) {
-        // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
-      } else {
-        console.log(noteId, uid);
-        await updateNote(
-          uid,
-          noteId,
-          titleRef.current,
-          articleData.current
-        ).catch((e) => console.log(e));
-        console.log(img.current);       
-        await uploadImages(uid, noteId, img.current).catch((e) =>
-          console.log(e)
-        );
-        console.log("note updated");
-      }
+      // if (reminder.current) {
+      //   // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
+      // } else {
+      await updateNote(uid, noteId, titleRef.current, articleData.current);
+      // console.log(img.current);
+      // await uploadImages(uid, noteId, img.current).catch((e) =>
+      //   console.log(e)
+      // );
+      console.log("note updated");
+      // }
     } else {
-      if (reminder.current) {
-        // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
-        // console.log("reminder created success");
-      } else {
-        await createNote(
-          uid,
-          labelRef.current,
-          titleRef.current,
-          articleData.current,
-          img.current
-        );
-      }
-    }
-    if (noteIdExist.current) {
-      dispatch(loadImage({ uid: uid, noteId: noteId, uri: img.current }));
-    } else if (noteNewId.current) {
-      dispatch(
-        loadImage({ uid: uid, noteId: noteNewId.current, uri: img.current })
+      // if (reminder.current) {
+      //   // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
+      //   // console.log("reminder created success");
+      // } else {
+      await createNote(
+        uid,
+        labelRef.current,
+        titleRef.current,
+        articleData.current,
+        []
+        // img.current
       );
+      
+      // }
     }
+    // if (noteIdExist.current) {
+    //   dispatch(loadImage({ uid: uid, noteId: noteId, uri: img.current }));
+    // } else if (noteNewId.current) {
+    //   dispatch(
+    //     loadImage({ uid: uid, noteId: noteNewId.current, uri: img.current })
+    //   );
+    // }
   };
 
   useEffect(() => {
@@ -223,10 +212,8 @@ const Note = ({ route, theme }: NoteScreenProps) => {
     setIsDialogVisible(false);
   };
   const handleDelete = () => {
-    console.log(label,'labekl',noteId);
-    
-    deleteNote(uid, noteId, label)
-      .then(() => navigation.goBack()) 
+    deleteNote(uid, noteId, labelRef.current)
+      .then(() => navigation.goBack())
       .catch((e) => console.log(e));
   };
   return (
@@ -245,13 +232,17 @@ const Note = ({ route, theme }: NoteScreenProps) => {
         style={styles.subContainer}
       >
         <View>
-          <Header headerText={labelName.current} showDelete={true} handleDelete={handleDelete}/>
+          <Header
+            headerText={labelName.current}
+            showDelete={true}
+            handleDelete={handleDelete}
+          />
         </View>
         {isCompleteNew.current && (
           <DropdownComponent
             data={route.params?.labelData}
-            value={value}
-            setValue={setValue}
+            value={label}
+            setValue={setLable}
           />
         )}
         {/* <ScrollView style={styles.container} ref={scrollRef}> */}
@@ -319,10 +310,10 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           useContainer
         />
         {/* </ScrollView> */}
-        {reminder.current && (
+        {/* {reminder.current && (
           <DateTime date={date} setDate={setDate}></DateTime>
-        )}
-        {reminder.current ? (
+        )} */}
+        {/* {reminder.current ? (
           <RichToolbar
             style={[styles.richBar]}
             editor={RichText}
@@ -343,34 +334,34 @@ const Note = ({ route, theme }: NoteScreenProps) => {
             ]}
             onInsertLink={handleInsertLink}
           />
-        ) : (
-          <RichToolbar
-            style={[styles.richBar]}
-            editor={RichText}
-            disabled={false}
-            iconTint={"white"}
-            selectedIconTint={"black"}
-            disabledIconTint={"white"}
-            // onPressAddImage={onPressAddImage}
-            iconSize={25}
-            actions={[
-              actions.insertImage,
-              actions.setBold,
-              actions.setItalic,
-              actions.insertBulletsList,
-              actions.insertOrderedList,
-              actions.insertLink,
-              actions.setStrikethrough,
-              actions.setUnderline,
-            ]}
-            onInsertLink={handleInsertLink}
-            iconMap={{
-              [actions.insertImage]: () => (
-                <ImagePicker photo={photo} setPhoto={setPhoto} />
-              ),
-            }}
-          />
-        )}
+        ) : ( */}
+        <RichToolbar
+          style={[styles.richBar]}
+          editor={RichText}
+          disabled={false}
+          iconTint={"white"}
+          selectedIconTint={"black"}
+          disabledIconTint={"white"}
+          // onPressAddImage={onPressAddImage}
+          iconSize={25}
+          actions={[
+            actions.insertImage,
+            actions.setBold,
+            actions.setItalic,
+            actions.insertBulletsList,
+            actions.insertOrderedList,
+            actions.insertLink,
+            actions.setStrikethrough,
+            actions.setUnderline,
+          ]}
+          onInsertLink={handleInsertLink}
+          iconMap={{
+            [actions.insertImage]: () => (
+              <ImagePicker photo={photo} setPhoto={setPhoto} />
+            ),
+          }}
+        />
+        {/* )} */}
       </KeyboardAvoidingView>
       <CustomDialogInput
         isVisible={isDialogVisible}
