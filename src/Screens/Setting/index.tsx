@@ -15,7 +15,7 @@ import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { STRINGS } from "../../Constants/Strings";
-import { logIn, updateUser } from "../../Store/Common";
+import { updateLogIn, updateUser } from "../../Store/Common";
 import { toggleTheme } from "../../Store/Theme";
 import { styles } from "./style";
 import { SettingProps, themeState } from "./types";
@@ -34,7 +34,7 @@ function Setting({ navigation, theme }:SettingProps) {
         await auth()
           .signOut()
           .catch((e) => console.log(e));
-        dispatch(logIn(false));
+        dispatch(updateLogIn(false));
         dispatch(updateUser(null));
         await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(false));
         AsyncStorage.clear();
@@ -42,7 +42,7 @@ function Setting({ navigation, theme }:SettingProps) {
       } else {
         try {
           await GoogleSignin.signOut().catch((e) => console.log(e));
-          dispatch(logIn(false));
+          dispatch(updateLogIn(false));
           dispatch(updateUser(null));
           await AsyncStorage.setItem(
             STRINGS.IS_LOGGED_IN,

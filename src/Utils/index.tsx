@@ -14,9 +14,11 @@ import {
   YUP_STRINGS,
 } from "../Constants/Strings";
 import { AppDispatch } from "../Store";
-import { logIn, updateUser } from "../Store/Common";
+import { updateLogIn, updateProvider, updateUser } from "../Store/Common";
 import { RootStackScreenProps } from "../Types/navigation";
 import { Note, valuesTypes } from "./types";
+import { useRealm } from "@realm/react";
+import { BSON, RealmObjectConstructor, UpdateMode } from "realm";
 export const logInUser = async (
   email: string,
   password: string,
@@ -27,8 +29,9 @@ export const logInUser = async (
       email,
       password
     );
-    dispatch(logIn(true));
-    dispatch(updateUser({ uid: userCredential.user.uid }));
+    dispatch(updateLogIn(true))
+    dispatch(updateUser(userCredential.user.uid))
+    dispatch(updateProvider('firebase'));
     await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true));
   } catch (error) {
     console.error(error);
@@ -48,16 +51,14 @@ export const createUser = async (
     await userCredentials.user.updateProfile({
       displayName: values.firstName + " " + values.lastName,
     });
-    signUpUser(userCredentials.user, "firebas e", dispatch, navigation);
+    signUpUser(userCredentials.user, navigation);
   } catch (error) {
-    // console.error('Error creating account:', error.code, error.message);
+    console.error('Error creating account:', error.code, error.message);
   }
 };
 
 export const signUpUser = async (
   user: FirebaseAuthTypes.User,
-  providerId: string,
-  dispatch: Dispatch<UnknownAction>,
   navigation: RootStackScreenProps<"SignUp">
 ) => {
   try {
@@ -118,13 +119,6 @@ export const signUpUser = async (
       batch.set(newDocRef, note);
     });
     await batch.commit();
-    // dispatch(logIn(true));
-    // dispatch(
-    //   updateUser({
-    //     uid: user.uid,
-    //     providerId: providerId,
-    //   })
-    // );
     // await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true))
     navigation.navigate(SCREEN_CONSTANTS.Login);
   } catch (error) {
@@ -230,26 +224,30 @@ export const createNote = async (
   uid: string,
   labelId: string,
   title: string,
-  content: string
-  // image:string[],
+  content: string,
+  imageURL:string[]
 ) => {
   const labelRef = firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
     .collection(FIREBASE_STRINGS.LABELS)
     .doc(labelId);
-  await firestore()
+  const newNoteRef = await firestore()
     .collection(FIREBASE_STRINGS.USER)
     .doc(uid)
     .collection(FIREBASE_STRINGS.NOTES)
-    .add({
+    .doc();
+    const URL = await uploadImages(uid, newNoteRef.id, imageURL).catch((e) =>
+      console.log(e)
+    );
+   await newNoteRef.set({
       label: labelRef,
       title: title,
       content: content,
       time_stamp: firestore.FieldValue.serverTimestamp(),
-      url: [],
+      url: URL,
     });
-  labelRef.update({ count: firestore.FieldValue.increment(1) });
+  await labelRef.update({ count: firestore.FieldValue.increment(1) });
 };
 
 export const updateNote = async (
@@ -362,10 +360,10 @@ export const uploadImages = async (
   noteId: string,
   imageURL: string[]
 ) => {
-  if (!imageURL || imageURL.length > 0) {
+  if (!imageURL || imageURL.length === 0) {
     console.log("Empty imageURL");
     return;
-  }
+  }  
   const uploadedImageURLs = await Promise.all(
     imageURL.map(async (image) => {
       const photoName = image.split("/").pop();
@@ -375,11 +373,68 @@ export const uploadImages = async (
       return reference.getDownloadURL();
     })
   );
-  await firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.NOTES)
-    .doc(noteId)
-    .update({ url: uploadedImageURLs });
+  return uploadedImageURLs
+  // await firestore()
+  //   .collection(FIREBASE_STRINGS.USER)
+  //   .doc(uid)
+  //   .collection(FIREBASE_STRINGS.NOTES)
+  //   .doc(noteId)
+  //   .update({ url: uploadedImageURLs });
   console.log("images uploaded successfully");
 };
+
+// realm and firestore
+
+export async function syncFirestoreToRealm(uid:string,realmInstance:Realm) {
+  const notesSnapshot = await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).collection(FIREBASE_STRINGS.NOTES).get();
+  const labelsSnapshot = await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).collection(FIREBASE_STRINGS.LABELS).get();
+  realmInstance.write(() => {
+    notesSnapshot.docs.forEach(note => {
+      const data = note.data();
+      realmInstance.create('Note', {
+        _id: note.id,
+        title: data.title,
+        content: data.content,
+        label: data.label.id,
+        imagesURL: data.url,
+        timestamp: data.time_stamp.toDate(),
+      }, UpdateMode.Modified);
+    });
+    labelsSnapshot.forEach(doc => {
+      const data = doc.data();
+      realmInstance.create('Label', {
+        _id: doc.id,
+        label: data.label,
+        count: data.count,
+        timestamp: data.time_stamp.toDate(),
+      }, UpdateMode.Modified);
+    });
+  });
+}
+
+export async function syncRealmToFirestore(uid:string, realmInstance:Realm) {
+  const notes = realmInstance.objects('Note');
+  const labels = realmInstance.objects('Label');
+  console.log(notes,'note');
+  console.log(labels,'labels');
+  
+  // notes.forEach(note => {
+  //   firestore().collection(FIREBASE_STRINGS.USER).doc(uid).collection(FIREBASE_STRINGS.NOTES).doc(note._id.toString()).set({
+  //     _id: note._id,
+  //     title: note.title,
+  //     content: note.content,
+  //     label: note.label,
+  //     imagesURL: note.imagesURL,
+  //     timestamp: firebase.firestore.Timestamp.fromDate(note.timestamp),
+  //   });
+  // });
+
+  // labels.forEach(label => {
+  //   firestore.collection('labels').doc(label._id.toString()).set({
+  //     _id: label._id,
+  //     name: label.name,
+  //     count: label.count,
+  //     timestamp: firebase.firestore.Timestamp.fromDate(label.timestamp),
+  //   });
+  // });
+}

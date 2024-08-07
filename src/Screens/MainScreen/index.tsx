@@ -11,37 +11,33 @@ import { STRINGS } from '../../Constants/Strings';
 import { SCREEN_CONSTANTS } from '../../Constants/index';
 import Google from './google';
 import { styles } from './style';
-import { EnterProps, isConnectedState } from './type';
+import { EnterProps } from './type';
+import { RootState } from '../../Store';
 
-function Enter({ navigation,theme }:EnterProps) {
-  const isConnected = useSelector((state:isConnectedState)=>state.image.isConnected)
-  const isOffline = useRef(!isConnected)
-  const THEME = theme  
-  
+function Enter({ navigation, theme }: EnterProps) {
+  const isConnected = useSelector((state: RootState) => state.network.isAvailable)
+  const THEME = theme
+  const networkStatus = useRef<boolean>(false);
   useEffect(() => {
-    isOffline.current = !isOffline.current
+    networkStatus.current = isConnected;
     checkConnection();
   }, [isConnected]);
-
   const onPress = () => {
     navigation.navigate(SCREEN_CONSTANTS.SignUp);
   };
   const logIn = () => {
     navigation.navigate(SCREEN_CONSTANTS.Login);
   };
-  
-  const checkConnection = () => {    
-    if(isOffline.current){console.log('wow');
-     return}
-    else {     
+  const checkConnection = () => {
+    if (!networkStatus.current) {
       Alert.alert(
         "No Internet Connection",
         "Please check your internet connection and try again.",
         [
           {
-            text: "OK",
+            text: "Retry",
             onPress: () => {
-              checkConnection()
+              checkConnection();
             },
           },
         ]
@@ -49,25 +45,25 @@ function Enter({ navigation,theme }:EnterProps) {
     }
   };
   return (
-    <SafeAreaView style={[styles.container,{backgroundColor:THEME.BACKGROUND}]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}>
       <View style={styles.subContainer}>
         <View style={styles.viewText}>
-            <Text style={[styles.text1,styles.font]}>{STRINGS.NOTE_TAKING_APP.PART1}</Text>
-            <Text style={[styles.text2,styles.font,{color:THEME.TEXT1}]}>{STRINGS.NOTE_TAKING_APP.PART2}</Text>
-          </View>
+          <Text style={[styles.text1, styles.font]}>{STRINGS.NOTE_TAKING_APP.PART1}</Text>
+          <Text style={[styles.text2, styles.font, { color: THEME.TEXT1 }]}>{STRINGS.NOTE_TAKING_APP.PART2}</Text>
+        </View>
         <View style={styles.svg}>
-          {ICONS.DAIRY(widthPercentageToDP('60'),heightPercentageToDP('25'),)}
+          {ICONS.DAIRY(widthPercentageToDP('60'), heightPercentageToDP('25'),)}
         </View>
         <CustomText
           text={STRINGS.SAVE_SHARE_NOTES}
-          styles={[styles.textSave, styles.font,{color:THEME.TEXT1}]}
+          styles={[styles.textSave, styles.font, { color: THEME.TEXT1 }]}
         />
-        <CustomButton text={STRINGS.CREATE_ACCOUNT} onPress={onPress}/>
+        <CustomButton text={STRINGS.CREATE_ACCOUNT} onPress={onPress} />
         <Google></Google>
         <View style={styles.footer}>
-          <CustomText text={STRINGS.HAVE_ACCOUNT} styles={[styles.simpleText,{color:THEME.TEXT1}]} />
+          <CustomText text={STRINGS.HAVE_ACCOUNT} styles={[styles.simpleText, { color: THEME.TEXT1 }]} />
           <Text onPress={logIn} style={[styles.simpleText, styles.colorText]}>
-            {'  ' +STRINGS.LOG_IN}
+            {'  ' + STRINGS.LOG_IN}
           </Text>
         </View>
       </View>

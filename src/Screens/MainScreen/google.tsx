@@ -13,7 +13,7 @@ import { useDispatch } from 'react-redux';
 import { SCREEN_CONSTANTS } from '../../Constants';
 import { ICONS } from '../../Constants/Icons';
 import { PLATEFORM, STRINGS } from '../../Constants/Strings';
-import { logIn, updateUser } from '../../Store/Common';
+import { updateLogIn, updateProvider, updateUser, updateUserProfileURL } from '../../Store/Common';
 import { RootStackParamList, RootStackScreenProps } from '../../Types/navigation';
 import { signUpUser } from '../../Utils';
 import { styles } from './style';
@@ -31,17 +31,15 @@ export default function Google() {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      
       if (userInfo) {
         const googleCredential = auth.GoogleAuthProvider.credential(userInfo.idToken);
         const ans = await auth().signInWithCredential(googleCredential);
-        console.log(ans);
-
         if (ans.additionalUserInfo?.isNewUser) {
-          signUpUser(ans.user, 'google.com', dispatch, navigation);
+          signUpUser(ans.user, navigation);
+          console.log('hello noob');
         } else {
-          dispatch(logIn(true));
-          dispatch(updateUser({ uid: ans.user.uid, providerId: 'google.com' }));
+          dispatch(updateUser(ans.user)); 
+          dispatch(updateLogIn(true));            
           await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true));
           navigation.navigate(SCREEN_CONSTANTS.HomeNavigation);
         }

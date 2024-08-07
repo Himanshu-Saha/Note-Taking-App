@@ -22,32 +22,24 @@ import LabelTemplate from "../../Components/LabelTemplate/LabelTemplate";
 import { ICONS } from "../../Constants/Icons";
 import { IMAGES } from "../../Constants/Images";
 import { STRINGS } from "../../Constants/Strings";
-import { useUpdateLabel } from "../../Hooks/firebase";
-import { fetchLabels } from "../../Utils";
+import { useFirestoreToRealmSync, useUpdateLabel } from "../../Hooks/firebase";
+import { fetchLabels, syncFirestoreToRealm, syncRealmToFirestore } from "../../Utils";
 import { colorSchemeState } from "../MainScreen/type";
 import { styles } from "./style";
 import { HomeProps, newDataType } from "./types";
-// import { AdBannerComponent } from "../../Shared/Services/NativeModules";
+import { RootState } from "../../Store";
+import { useQuery, useRealm } from "@realm/react";
 
 function Home({ theme }: HomeProps) {
   const [usedSpace, setUsedSpace] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
   const [label, setLabel] = useState<newDataType | null>();
-  const colorScheme = useSelector(
-    (state: colorSchemeState) => state.theme.theme
-  );
+  const colorScheme = useSelector((state: colorSchemeState) => state.theme.theme);
   const THEME = theme;
-  const user = auth().currentUser;
+  const user = useSelector((state: RootState) => state.common.user);
+  const uid = user?.uid;
   const defaultImage = IMAGES.DEFAULTUSER;
-  const photoURL = user?.photoURL
-    ? { uri: { uri: user.photoURL } }
-    : { uri: defaultImage };
-  useEffect(() => {
-    if(user?.uid)
-    fetchLabels(user?.uid);
-  }, []);
-  if(user?.uid)
-  useUpdateLabel(user?.uid,setLabel)
+  const photoURL = user ? user.photoURL : defaultImage;
   const fetchStorageInfo = useCallback(async () => {
     try {
       const freeDiskStorage = await DeviceInfo.getTotalDiskCapacity();
@@ -59,106 +51,106 @@ function Home({ theme }: HomeProps) {
     }
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      fetchLabels(user.uid);
+    }
+  }, [user]);
+  const realm = useRealm();
+  useUpdateLabel(uid, setLabel);
+  useEffect(() => {
+    syncFirestoreToRealm(user.uid, realm).then(() => {
+      console.log('done imporit');
+    }).catch(e => console.log(e, 'error')
+    )
+    const notes = realm.objects('Note');
+    const notesListener = notes.addListener(() => {
+      const notes = realm.objects('Note'); console.log(notes,'lala notes');
+    });
+    return () => {
+      realm.removeAllListeners();
+    };
+  }, [])
+  useFirestoreToRealmSync(uid);
   useFocusEffect(
     useCallback(() => {
       fetchStorageInfo();
     }, [fetchStorageInfo])
   );
+  const bytesToGB = (bytes: number) => (bytes / (1024 * 1024 * 1024)).toFixed(2);
 
-  const bytesToGB = (bytes: number) =>
-    (bytes / (1024 * 1024 * 1024)).toFixed(2);
-  if (user) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}
-      >
-        <View style={styles.subcontainer}>
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.welcome, { color: THEME.TEXT3 }]}>
-                {"Welcome" + ", " + user?.displayName + "!"}
-              </Text>
-              <Text style={[styles.NoteTaking, { color: THEME.TEXT1 }]}>
-                {STRINGS.NOTE}
-              </Text>
-            </View>
-            <View style={styles.innerHeader}>
-              <ImageModal
-                // modalImageStyle={{height:50,width:50}}
-                resizeMode="contain"
-                imageBackgroundColor={THEME.BACKGROUND}
-                style={{
-                  borderRadius: 50,
-                  height: heightPercentageToDP("6.8%"),
-                  width: heightPercentageToDP("6.8%"),
-                }}
-                source={photoURL.uri}
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}>
+      <View style={styles.subcontainer}>
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.welcome, { color: THEME.TEXT3 }]}>
+              {"Welcome" + ", " + user.displayName + "!"}
+            </Text>
+            <Text style={[styles.NoteTaking, { color: THEME.TEXT1 }]}>
+              {STRINGS.NOTE}
+            </Text>
+          </View>
+          <View style={styles.innerHeader}>
+            <ImageModal
+              resizeMode="contain"
+              imageBackgroundColor={THEME.BACKGROUND}
+              style={{
+                borderRadius: 50,
+                height: heightPercentageToDP("6.8%"),
+                width: heightPercentageToDP("6.8%"),
+              }}
+              source={{ uri: photoURL }}
+            />
+          </View>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.imageContainer}>
+            <ImageBackground
+              source={colorScheme === "light" ? IMAGES.HOME : IMAGES.HOME_DARK}
+              style={styles.image}
+            >
+              <View style={styles.imageInner}>
+                {colorScheme === "light"
+                  ? ICONS.PIECHART(heightPercentageToDP("8.2%"), heightPercentageToDP("8.2%"), "none")
+                  : ICONS.PIECHART_BLACK(heightPercentageToDP("8.2%"), heightPercentageToDP("8.2%"), "none")}
+                <View style={{ paddingLeft: widthPercentageToDP("7%") }}>
+                  <Text style={[styles.text]}>{STRINGS.AVAILABLE_SPACE}</Text>
+                  <Text style={[styles.size, { color: THEME.HOMESIZE }]}>
+                    {bytesToGB(usedSpace)} GB of {bytesToGB(freeSpace)} GB Used
+                  </Text>
+                </View>
+              </View>
+            </ImageBackground>
+          </View>
+
+          {!label && <ActivityIndicator size="large" />}
+          {label && (
+            <View style={styles.labels}>
+              <FlatList
+                data={label}
+                showsVerticalScrollIndicator={false}
+                numColumns={2}
+                renderItem={({ item }) => (
+                  <LabelTemplate
+                    icon={colorScheme === "light" ? ICONS.OTHERS : ICONS.INTEL_BLACK}
+                    labelName={item.labelName}
+                    labelId={item.labelId}
+                    numberOfNotes={item.count}
+                    uid={user.uid}
+                  />
+                )}
               />
             </View>
-          </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.imageContainer}>
-              <ImageBackground
-                source={
-                  colorScheme === "light" ? IMAGES.HOME : IMAGES.HOME_DARK
-                }
-                // resizeMode="cover"
-                style={styles.image}
-              >
-                <View style={styles.imageInner}>
-                  {colorScheme === "light"
-                    ? ICONS.PIECHART(
-                        heightPercentageToDP("8.2%"),
-                        heightPercentageToDP("8.2%"),
-                        "none"
-                      )
-                    : ICONS.PIECHART_BLACK(
-                        heightPercentageToDP("8.2%"),
-                        heightPercentageToDP("8.2%"),
-                        "none"
-                      )}
-                  <View style={{ paddingLeft: widthPercentageToDP("7%") }}>
-                    <Text style={[styles.text]}>{STRINGS.AVAILABLE_SPACE}</Text>
-                    <Text style={[styles.size, { color: THEME.HOMESIZE }]}>
-                      {bytesToGB(usedSpace)} GB of {bytesToGB(freeSpace)} GB
-                      Used
-                    </Text>
-                  </View>
-                </View>
-              </ImageBackground>
-              {/* <NewModuleButton /> */}
-            </View>
-
-            {!label && <ActivityIndicator size="large" />}
-            {label && (
-              <View style={styles.labels}>
-                <FlatList
-                  data={label}
-                  showsVerticalScrollIndicator={false}
-                  numColumns={2}
-                  renderItem={({ item }) => (
-                    <LabelTemplate
-                      icon={
-                        colorScheme === "light"
-                          ? ICONS.OTHERS
-                          : ICONS.INTEL_BLACK
-                      }
-                      labelName={item.labelName}
-                      labelId = {item.labelId}
-                      numberOfNotes={item.count}
-                      uid={user.uid}
-                      // theme={THEME}
-                    />
-                  )}
-                />
-              </View>
-            )}
-          </ScrollView>
-        </View>
-      </SafeAreaView>
-    );
-  } else {
-    return <></>;
-  }
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
 }
+
 export default withTheme(Home);

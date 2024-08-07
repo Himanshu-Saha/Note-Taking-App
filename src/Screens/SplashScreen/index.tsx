@@ -11,10 +11,11 @@ import withTheme, { themeType } from "../../Components/HOC";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { ICONS } from "../../Constants/Icons";
 import { STRINGS } from "../../Constants/Strings";
-import { logIn } from "../../Store/Common";
+// import { updateLogIn } from "../../Store/Common";
 import { getFromAsyncStorage } from "../../Store/Image";
 import { styles } from "./style";
 import { SplashProps } from "./types";
+import { updateLogIn } from "../../Store/Common";
 
 function Splash({ theme, navigation }: SplashProps) {
   const dispatch = useDispatch();
@@ -41,7 +42,7 @@ function Splash({ theme, navigation }: SplashProps) {
               try {
                 const isLoggedIn = JSON.parse(isLoggedInData[1]);
                 if (isLoggedIn) {
-                  dispatch(logIn(true));
+                  dispatch(updateLogIn(true));
                   navigation.dispatch(
                     CommonActions.reset({
                       index: 0,
@@ -49,7 +50,7 @@ function Splash({ theme, navigation }: SplashProps) {
                     })
                   );
                 } else {
-                  dispatch(logIn(false));
+                  dispatch(updateLogIn(false));
                   navigation.dispatch(
                     CommonActions.reset({
                       index: 0,
@@ -59,7 +60,7 @@ function Splash({ theme, navigation }: SplashProps) {
                 }
               } catch (e) {
                 // console.error("Error parsing isLoggedInData:", e);
-                dispatch(logIn(false));
+                dispatch(updateLogIn(false));
                 navigation.dispatch(
                   CommonActions.reset({
                     index: 0,

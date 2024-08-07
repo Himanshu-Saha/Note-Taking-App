@@ -122,7 +122,7 @@ const Note = ({ route, theme }: NoteScreenProps) => {
       try {
         const newUri = await imageCompressor(photo);
         setImageData((prevImageData) => [...prevImageData, newUri]);
-        setNewImageData((prevImageData) => [...prevImageData, newUri]);
+        // setNewImageData((prevImageData) => [...prevImageData, newUri]);
         img.current = [...img.current, newUri];
       } catch (error) {
         // console.log("Error compressing image:", error);
@@ -150,7 +150,8 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           titleRef.current,
           articleData.current
         ).catch((e) => console.log(e));
-        await uploadImages(uid, noteId, newImageData).catch((e) =>
+        console.log(img.current);       
+        await uploadImages(uid, noteId, img.current).catch((e) =>
           console.log(e)
         );
         console.log("note updated");
@@ -164,7 +165,8 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           uid,
           labelRef.current,
           titleRef.current,
-          articleData.current
+          articleData.current,
+          img.current
         );
       }
     }
