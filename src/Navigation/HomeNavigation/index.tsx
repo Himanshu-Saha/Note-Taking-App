@@ -23,19 +23,22 @@ function HomeNavigation({ theme }: HomeNavigationProps) {
   const parentNavigation = useNavigation();
   const Tab = createBottomTabNavigator<RootTabParamList>();
   const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
   let uid = user?.uid;
   const realm = useRealm();
   useEffect(() => {
-    const labels = realm.objects<Label>("Label").sorted("timestamp", true);
-    const updateLabels = () => {
-      setLabelData([...labels]);
-    };
-    updateLabels();
-    labels.addListener(() => updateLabels());
-    return () => {
-      labels.removeListener(updateLabels);
-    };
-  }, [realm]);
+    if (!isLoading) {
+      const labels = realm.objects<Label>("Label").sorted("timestamp", true);
+      const updateLabels = () => {
+        setLabelData([...labels]);
+      };
+      updateLabels();
+      labels.addListener(() => updateLabels());
+      return () => {
+        labels.removeListener(updateLabels);
+      };
+    }
+  }, [realm,isLoading]);
 
   return (
     <>

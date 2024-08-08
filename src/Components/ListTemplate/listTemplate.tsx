@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { useRealm } from "@realm/react";
 import React, { useState } from "react";
 import {
   Text,
@@ -11,7 +12,12 @@ import { useSelector } from "react-redux";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { ICONS } from "../../Constants/Icons";
 import { RootState } from "../../Store";
-import { deleteLabel, updateLabel } from "../../Utils";
+import {
+  deleteLabel,
+  deleteLabelFromRealm,
+  updateLabel,
+  updateLabelInRealm,
+} from "../../Utils";
 import CustomDialogInput from "../DialogInput";
 import withTheme from "../HOC";
 import Icon from "../Icon";
@@ -26,7 +32,12 @@ function ListTemplate({
   isEditLable,
 }: listTemplateTypes) {
   const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
+  const isNetworkAvalible = useSelector(
+    (state: RootState) => state.network.isAvailable
+  );
   const navigation = useNavigation();
+  const realm = useRealm();
   const [isDialogInputVisible, setIsDialogInputVisible] = useState(false);
   const source: HTMLSource = {
     html: typeof note?.content === "string" ? note.content : "",
@@ -55,7 +66,17 @@ function ListTemplate({
       }
   };
   const handleSubmit = (labelName: string) => {
-    if (user && label) updateLabel(user.uid, label._id, labelName);
+    if (user && label && isNetworkAvalible && !isLoading)
+      updateLabel(user.uid, label._id, labelName);
+    else {
+      updateLabelInRealm(label?._id, labelName, realm);
+    }
+  };
+  const handleDelete = () => {
+    if (isNetworkAvalible && !isLoading) deleteLabel(user?.uid, label?._id);
+    else {
+      deleteLabelFromRealm(label?._id, realm);
+    }
   };
   return (
     <>
@@ -168,7 +189,7 @@ function ListTemplate({
                 icon={ICONS.DELETE}
                 width={20}
                 height={20}
-                action={() => deleteLabel(user?.uid, label?._id)}
+                action={() => handleDelete()}
               />
             </View>
           </View>

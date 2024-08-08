@@ -144,3 +144,12 @@ export const FIREBASE_STRINGS = {
     POPUP_CLOSED: 'auth/popup-closed-by-user',
   },
 }as const;
+
+export const REALM = {
+  STATUS:{
+    ADD:'added',
+    DELETE:'removed',
+    MODIFY:'modified',
+    FIRESTORE:'firestore'
+  }
+}

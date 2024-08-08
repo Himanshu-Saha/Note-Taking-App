@@ -17,8 +17,9 @@ import SignUp from "../../Screens/SignUp";
 import Splash from "../../Screens/SplashScreen";
 import { RootState, useAppDispatch } from "../../Store";
 import { updateLogIn, updateUser } from "../../Store/Common";
+import { setLoading } from "../../Store/Loader";
 import { RootStackParamList } from "../../Types/navigation";
-import { syncFirestoreToRealm } from "../../Utils";
+import { syncFirestoreToRealm, syncRealmToFirestore } from "../../Utils";
 import HomeNavigation from "../HomeNavigation";
 import { authNavigationProps } from "./types";
 
@@ -31,12 +32,10 @@ function AuthNavigation({ theme }: authNavigationProps) {
   const isConnected = useSelector(
     (state: RootState) => state.network.isAvailable
   );
-  async function test() {
-    const storage = await AsyncStorage.getItem("User");
-    console.log(storage, "storage");
-  }
 
   useNetworkAvailable(dispatch);
+
+  // fetch user credentail(if exist) from storage
   useEffect(() => {
     AsyncStorage.getItem("User").then((user) => {
       if (user) {
@@ -54,18 +53,32 @@ function AuthNavigation({ theme }: authNavigationProps) {
     });
   }, []);
 
+  // sync data to firestore based on network
   useEffect(() => {
-    if (!user?.uid) console.log("user?.uid missing auth page");
-    else if (isLoggedIn && isConnected && user?.uid) {
-      syncFirestoreToRealm(user?.uid, realm)
+    if (isLoggedIn && !user?.uid) {
+      console.log("user?.uid missing auth page");
+      dispatch(updateLogIn(false));
+    } else if (isLoggedIn && isConnected && user?.uid) {
+      dispatch(setLoading(true));
+      syncRealmToFirestore(user?.uid, realm)
         .then(() => {
-          console.log("syncFirestoreToRealm");
+          syncFirestoreToRealm(user?.uid, realm)
+            .then(() => {
+              console.log("synced Firestore To Realm successfully");
+              dispatch(setLoading(false));
+            })
+            .catch((e) => {
+              console.log(e, "Error1: syncFirestoreToRealm");
+              dispatch(setLoading(false));
+            });
         })
         .catch((e) => {
-          console.log(e, "Error: syncFirestoreToRealm");
+          console.log(e, "Error2: syncFirestoreToRealm");
+          dispatch(setLoading(false));
         });
     } else console.log("not connected to any network");
   }, [isConnected]);
+
   return (
     <NavigationContainer>
       <Stack.Navigator

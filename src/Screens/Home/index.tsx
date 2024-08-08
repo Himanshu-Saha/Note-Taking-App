@@ -21,7 +21,7 @@ import withTheme from "../../Components/HOC";
 import LabelTemplate from "../../Components/LabelTemplate/LabelTemplate";
 import { ICONS } from "../../Constants/Icons";
 import { IMAGES } from "../../Constants/Images";
-import { STRINGS } from "../../Constants/Strings";
+import { REALM, STRINGS } from "../../Constants/Strings";
 import { useFirestoreToRealmSync } from "../../Hooks/firebase";
 import { Label } from "../../RealmDB";
 import { RootState } from "../../Store";
@@ -39,6 +39,10 @@ function Home({ theme }: HomeProps) {
   );
   const THEME = theme;
   const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
+  const isNetworkAvalible = useSelector(
+    (state: RootState) => state.network.isAvailable
+  );
   const uid = user?.uid;
   const defaultImage = IMAGES.DEFAULTUSER;
   const photoURL = user ? user.photoURL : defaultImage;
@@ -59,20 +63,23 @@ function Home({ theme }: HomeProps) {
   //   }
   // }, [user]);
   // useUpdateLabel(uid, setLabel);
-  if (uid) useFirestoreToRealmSync(uid, realm);
+  if (uid) useFirestoreToRealmSync(uid, realm, isLoading, isNetworkAvalible);
   useEffect(() => {
-    const labels = realm.objects<Label>('Label').sorted('timestamp', true); // true for descending order
-    const updateLabels = () => {
-      setLabel([...labels]);
-    };
-    updateLabels();
-    labels.addListener(() => updateLabels());
-    return () => {
-      labels.removeListener(updateLabels);
-    };
-  }, [realm]);
-  // console.log(label,'realm label');
-  
+    if (!isLoading) {
+      const labels = realm
+        .objects<Label>("Label")
+        .filtered("status != $0", REALM.STATUS.DELETE)
+        .sorted("timestamp", true);
+      const updateLabels = () => {
+        setLabel([...labels]);
+      };
+      updateLabels();
+      labels.addListener(() => updateLabels());
+      return () => {
+        labels.removeListener(updateLabels);
+      };
+    }
+  }, [realm, isLoading]);
   useFocusEffect(
     useCallback(() => {
       fetchStorageInfo();

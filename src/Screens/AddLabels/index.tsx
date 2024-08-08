@@ -12,6 +12,7 @@ import { addLabelProp } from "./types";
 
 function ADD_LABELS({ theme }: addLabelProp) {
   const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
   const realm = useRealm();
   const uid = user?.uid;
   const [label, setLabel] = useState<Label[]>();
@@ -21,16 +22,18 @@ function ADD_LABELS({ theme }: addLabelProp) {
   // }, []);
   // useUpdateLabel(uid, setNotesData);
   useEffect(() => {
-    const labels = realm.objects<Label>('Label').sorted('timestamp', true); // true for descending order
-    const updateLabels = () => {
-      setLabel([...labels]);
-    };
-    updateLabels();
-    labels.addListener(() => updateLabels());
-    return () => {
-      labels.removeListener(updateLabels);
-    };
-  }, [realm]);
+    if (!isLoading) {
+      const labels = realm.objects<Label>("Label").sorted("timestamp", true); // true for descending order
+      const updateLabels = () => {
+        setLabel([...labels]);
+      };
+      updateLabels();
+      labels.addListener(() => updateLabels());
+      return () => {
+        labels.removeListener(updateLabels);
+      };
+    }
+  }, [realm, isLoading]);
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}
@@ -49,7 +52,9 @@ function ADD_LABELS({ theme }: addLabelProp) {
             style={styles.list}
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => <ListTemplate label={item} isEditLable={true}/>}
+            renderItem={({ item }) => (
+              <ListTemplate label={item} isEditLable={true} />
+            )}
           ></FlatList>
         </View>
       </View>

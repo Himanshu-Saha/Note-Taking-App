@@ -1,4 +1,4 @@
-import { useQuery, useRealm } from "@realm/react";
+import { useRealm } from "@realm/react";
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,6 +19,7 @@ function Label({ navigation, route, theme }: LabelProps) {
   const [searchData, setSearchData] = useState<labelNotesDataType>([]);
   const [notesData, setNotesData] = useState<Note[]>();
   const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
   const realm = useRealm();
   const uid = user?.uid;
   const labelDetails =
@@ -39,23 +40,10 @@ function Label({ navigation, route, theme }: LabelProps) {
       setSearchData(filteredData);
     }
   };
-  const dataAll = useQuery('Note')
-  // console.log(dataAll,'tests');
-  
-  // useEffect(() => {
-  //   fetchNotesWithLabel(labelId, labelName, uid, setNotesData);
-  // }, [uid]);
-  // useFetchUpdatedLabelData(
-  //   labelId,
-  //   labelName,
-  //   uid,
-  //   setNotesData,
-  //   setSearchData
-  // );
   useEffect(() => {
     // InterstitialAd("ca-app-pub-3940256099942544/1033173712");
   }, []);
-  useLabelsById(labelDetails.labelId,realm,setNotesData)
+  useLabelsById(labelDetails.labelId,realm,setNotesData,isLoading)
   const addNewNote = () => {
     navigation.navigate(SCREEN_CONSTANTS.Note, { labelDetails });
   };

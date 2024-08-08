@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useRealm } from "@realm/react";
 import React from "react";
 import {
   Alert,
@@ -28,7 +29,7 @@ function Setting({ navigation, theme }: SettingProps) {
   const isThemeOn = useSelector((state: RootState) => state.theme.theme);
   const user = useSelector((state: RootState) => state.common.user);
   const THEME = theme;
-
+  const realm = useRealm();
   const signOut = async () => {
     try {
       if (user?.providerId !== "google.com") {
@@ -38,20 +39,20 @@ function Setting({ navigation, theme }: SettingProps) {
         dispatch(updateLogIn(false));
         dispatch(updateUser(null));
         // await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(false));
-        AsyncStorage.clear();
+        await AsyncStorage.clear()
+          .then(() => console.log("clear"))
+          .catch((e) => console.log(e, "async erroe"));
+        realm.write(()=>realm.deleteAll());
         navigation.navigate(SCREEN_CONSTANTS.Enter);
       } else {
         try {
           await GoogleSignin.signOut().catch((e) => console.log(e));
           dispatch(updateLogIn(false));
           dispatch(updateUser(null));
-          await AsyncStorage.setItem(
-            STRINGS.IS_LOGGED_IN,
-            JSON.stringify(false)
-          )
-          await AsyncStorage.clear().then(() =>
-            console.log("clear")
-          ).catch((e) => console.log(e, "async erroe"));
+          await AsyncStorage.clear()
+          .then(() => console.log("clear"))
+          .catch((e) => console.log(e, "async error"));
+          realm.write(()=>realm.deleteAll());
           navigation.navigate(SCREEN_CONSTANTS.Enter);
         } catch (error) {
           console.error(error);
