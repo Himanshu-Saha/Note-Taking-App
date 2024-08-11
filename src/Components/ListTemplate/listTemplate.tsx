@@ -23,6 +23,9 @@ import withTheme from "../HOC";
 import Icon from "../Icon";
 import { styles } from "./style";
 import { listTemplateTypes } from "./types";
+import { STRINGS } from "../../Constants/Strings";
+import FastImage from "react-native-fast-image";
+import { heightPercentageToDP } from "react-native-responsive-screen";
 function ListTemplate({
   note,
   maxHeight,
@@ -44,6 +47,7 @@ function ListTemplate({
   };
   const { width: contentWidth } = useWindowDimensions();
   const THEME = theme;
+  const image = note?.imagesURL?.at(0);
   let date;
   // if (typeof note.timestamp === "string") {
   //   date = new Date(note.timestamp);
@@ -106,7 +110,7 @@ function ListTemplate({
             ]}
           >
             <View>
-              {note?.title && (
+              {note?.title || !image ? (
                 <Text
                   style={[
                     styles.title,
@@ -117,6 +121,16 @@ function ListTemplate({
                 >
                   {title()}
                 </Text>
+              ) : (
+                <FastImage
+                  style={{
+                    height: heightPercentageToDP("10%"),
+                    width: "90%",
+                    alignSelf: "center",
+                    borderRadius:5
+                  }}
+                  source={{ uri: image }}
+                />
               )}
             </View>
             <RenderHTML
@@ -182,6 +196,7 @@ function ListTemplate({
                 width={20}
                 height={20}
                 action={() => setIsDialogInputVisible(true)}
+                color={theme.EDIT}
               />
             </View>
             <View style={{ paddingHorizontal: 4 }}>
@@ -190,6 +205,7 @@ function ListTemplate({
                 width={20}
                 height={20}
                 action={() => handleDelete()}
+                color={theme.DELETE}
               />
             </View>
           </View>

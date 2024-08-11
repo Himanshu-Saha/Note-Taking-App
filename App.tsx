@@ -7,6 +7,7 @@ import AuthNavigation from "./src/Navigation/AuthNavigation";
 import { realmConfig } from "./src/RealmDB";
 import { initializeAds } from "./src/Shared/Services/NativeModules";
 import { store } from "./src/Store";
+import Toast from 'react-native-toast-message';
 
 export default function App() {
   const {

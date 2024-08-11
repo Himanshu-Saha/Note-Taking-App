@@ -14,8 +14,6 @@ const DropdownComponent = ({
 }: dropdownComponentProps) => {
   const [isFocus, setIsFocus] = useState(false);
   const THEME = theme;
-console.log(value,'1');
-// console.log(labelName);
 
   return (
     <View style={[styles.container, { backgroundColor: THEME?.BACKGROUND }]}>

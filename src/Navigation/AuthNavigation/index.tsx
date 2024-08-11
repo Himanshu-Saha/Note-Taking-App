@@ -22,11 +22,17 @@ import { RootStackParamList } from "../../Types/navigation";
 import { syncFirestoreToRealm, syncRealmToFirestore } from "../../Utils";
 import HomeNavigation from "../HomeNavigation";
 import { authNavigationProps } from "./types";
+import Toast from "react-native-toast-message";
+import { default as auth } from "@react-native-firebase/auth";
+import Spinner from "react-native-loading-spinner-overlay";
+import { toastInfo } from "../../Utils/toast";
+import { TOAST_STRINGS } from "../../Constants/Strings";
 
 function AuthNavigation({ theme }: authNavigationProps) {
   const realm = useRealm();
   const dispatch = useAppDispatch();
   const isLoggedIn = useSelector((state: RootState) => state.common.isLogedIn);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
   const Stack = createNativeStackNavigator<RootStackParamList>();
   const user = useSelector((state: RootState) => state.common.user);
   const isConnected = useSelector(
@@ -45,18 +51,19 @@ function AuthNavigation({ theme }: authNavigationProps) {
         dispatch(updateUser(null));
       }
     });
-    AsyncStorage.getItem("isLogedIn").then((flag) => {
-      if (flag) {
-        JSON.parse(flag);
-        dispatch(updateLogIn(flag));
-      } else dispatch(updateLogIn(false));
-    });
+    AsyncStorage.getItem("isLogedIn")
+      .then((flag) => {
+        if (flag) {
+          JSON.parse(flag);
+          dispatch(updateLogIn(flag));
+        } else dispatch(updateLogIn(false));
+      })
+      .catch(() => dispatch(updateLogIn(false)));
   }, []);
 
   // sync data to firestore based on network
   useEffect(() => {
     if (isLoggedIn && !user?.uid) {
-      console.log("user?.uid missing auth page");
       dispatch(updateLogIn(false));
     } else if (isLoggedIn && isConnected && user?.uid) {
       dispatch(setLoading(true));
@@ -64,80 +71,99 @@ function AuthNavigation({ theme }: authNavigationProps) {
         .then(() => {
           syncFirestoreToRealm(user?.uid, realm)
             .then(() => {
-              console.log("synced Firestore To Realm successfully");
+              toastInfo(TOAST_STRINGS.SYNC_SUCCESS);
               dispatch(setLoading(false));
             })
             .catch((e) => {
-              console.log(e, "Error1: syncFirestoreToRealm");
+              toastInfo(TOAST_STRINGS.SYNC_Failed);
               dispatch(setLoading(false));
             });
         })
         .catch((e) => {
-          console.log(e, "Error2: syncFirestoreToRealm");
+          toastInfo(TOAST_STRINGS.SYNC_Failed);
           dispatch(setLoading(false));
         });
-    } else console.log("not connected to any network");
+    } else toastInfo(TOAST_STRINGS.CONNECTION_LOST);
+    // if (isConnected) {
+    //   const intervalId = setInterval(() => {
+    //     const currentUser = auth().currentUser;
+    //     if (currentUser) {
+    //       console.log(currentUser.photoURL);
+    //     }
+    //   }, 10000);
+    //   return () => {
+    //     clearInterval(intervalId);
+    //   };
+    // }
   }, [isConnected]);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={SCREEN_CONSTANTS.Splash}
-        screenOptions={{
-          headerStyle: { backgroundColor: theme.BACKGROUND },
-          headerTitleAlign: "center",
-          headerTintColor: "rgb(107, 78, 253)",
-          headerTitleStyle: {
-            fontWeight: "bold",
-            color: theme.TEXT1,
-            fontSize: heightPercentageToDP("3%"),
-          },
-        }}
-      >
-        {!isLoggedIn ? (
-          <>
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.Splash}
-              component={Splash}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.Enter}
-              component={Enter}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name={SCREEN_CONSTANTS.Login} component={LogIn} />
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.SignUp}
-              component={SignUp}
-              options={{ headerTitle: "Create Account" }}
-            />
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.ForgotPassword}
-              component={ForgotPassword}
-            />
-          </>
-        ) : (
-          <>
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.HomeNavigation}
-              component={HomeNavigation}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.Note}
-              component={Note}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name={SCREEN_CONSTANTS.Label}
-              component={Label}
-              options={{ headerShown: false }}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName={SCREEN_CONSTANTS.Splash}
+          screenOptions={{
+            headerStyle: { backgroundColor: theme.BACKGROUND },
+            headerTitleAlign: "center",
+            headerTintColor: "rgb(107, 78, 253)",
+            headerTitleStyle: {
+              fontWeight: "bold",
+              color: theme.TEXT1,
+              fontSize: heightPercentageToDP("3%"),
+            },
+          }}
+        >
+          {!isLoggedIn ? (
+            <>
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.Splash}
+                component={Splash}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.Enter}
+                component={Enter}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name={SCREEN_CONSTANTS.Login} component={LogIn} />
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.SignUp}
+                component={SignUp}
+                options={{ headerTitle: "Create Account" }}
+              />
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.ForgotPassword}
+                component={ForgotPassword}
+              />
+            </>
+          ) : (
+            <>
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.HomeNavigation}
+                component={HomeNavigation}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.Note}
+                component={Note}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name={SCREEN_CONSTANTS.Label}
+                component={Label}
+                options={{ headerShown: false }}
+              />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+      <Toast />
+      <Spinner
+        visible={isLoading}
+        textContent={"Loading..."}
+        // textStyle={styles.spinnerTextStyle}
+      />
+    </>
   );
 }
 export default withTheme(AuthNavigation);

@@ -26,28 +26,28 @@ function Label({ navigation, route, theme }: LabelProps) {
     (route.params as { labelDetails?: { labelId: string; labelName: string } })
       ?.labelDetails ?? {};
   const THEME = theme;
-
   const search = (e: string) => {
     let text = e.toLowerCase();
     if (notesData) {
       let filteredData = notesData.filter((item) => {
         return (
-          item.data.toLowerCase().match(text) ||
+          item.content.toLowerCase().match(text) ||
           item.title.toLowerCase().match(text)
         );
       });
-      // console.log(filteredData);
       setSearchData(filteredData);
     }
   };
   useEffect(() => {
     // InterstitialAd("ca-app-pub-3940256099942544/1033173712");
   }, []);
+  useEffect(()=>{
+    setSearchData(notesData)
+  },[notesData])
   useLabelsById(labelDetails.labelId,realm,setNotesData,isLoading)
   const addNewNote = () => {
     navigation.navigate(SCREEN_CONSTANTS.Note, { labelDetails });
   };
-  //  console.log(useQuery(Note),'realm');
 
   return (
     <SafeAreaView
@@ -61,7 +61,7 @@ function Label({ navigation, route, theme }: LabelProps) {
           headerText={labelDetails.labelName}
         />
       </View>
-      <StaggedLabel data={notesData} labelDetails={labelDetails}/>
+      <StaggedLabel data={searchData} labelDetails={labelDetails}/>
       <View style={styles.addNotes}>
         <CustomButton
           text={STRINGS.ADD_NEW_NOTES}

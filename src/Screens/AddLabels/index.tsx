@@ -9,6 +9,7 @@ import { Label } from "../../RealmDB";
 import { RootState } from "../../Store";
 import { styles } from "./style";
 import { addLabelProp } from "./types";
+import { REALM } from "../../Constants/Strings";
 
 function ADD_LABELS({ theme }: addLabelProp) {
   const user = useSelector((state: RootState) => state.common.user);
@@ -23,7 +24,7 @@ function ADD_LABELS({ theme }: addLabelProp) {
   // useUpdateLabel(uid, setNotesData);
   useEffect(() => {
     if (!isLoading) {
-      const labels = realm.objects<Label>("Label").sorted("timestamp", true); // true for descending order
+      const labels = realm.objects<Label>("Label").filtered("status != $0", REALM.STATUS.DELETE).sorted("timestamp", true); // true for descending order
       const updateLabels = () => {
         setLabel([...labels]);
       };

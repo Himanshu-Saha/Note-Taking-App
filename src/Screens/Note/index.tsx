@@ -4,13 +4,15 @@ import { useRealm } from "@realm/react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
+  ImageRequireSource,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   TextInput,
-  View,
+  View
 } from "react-native";
+import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
 import ImageModal from "react-native-image-modal";
 import {
   actions,
@@ -27,8 +29,9 @@ import DropdownComponent from "../../Components/Dropdown";
 import withTheme from "../../Components/HOC";
 import Header from "../../Components/Header";
 import ImagePicker from "../../Components/Image";
-import { STRINGS } from "../../Constants/Strings";
+import { STRINGS, TOAST_STRINGS } from "../../Constants/Strings";
 import { RootState } from "../../Store";
+import { setLoading } from "../../Store/Loader";
 import {
   addNoteToRealm,
   createNote,
@@ -40,6 +43,7 @@ import {
   uploadImages,
   uploadImageToRealm,
 } from "../../Utils";
+import { toastError, toastSuccess } from "../../Utils/toast";
 import { styles } from "./styles";
 import { NoteScreenProps } from "./types";
 
@@ -49,7 +53,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const realm = useRealm();
-  // const imageInitData = useSelector((state: RootState) => state.image.imageUri);
   const user = useSelector((state: RootState) => state.common.user);
   const isLoading = useSelector((state: RootState) => state.loader.isLoading);
   const isNetworkAvalible = useSelector(
@@ -62,7 +65,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   let labelId = "Others";
   let imageInitialData: string[] = [];
   let defaultLabelName = "Others";
-  // const reminder = useRef(false);
   const isNew = useRef(true);
   const isCompleteNew = useRef(false);
   const noteIdExist = useRef(false);
@@ -70,7 +72,7 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   const RichText = useRef<RichEditor>(null);
   const img = useRef<string[]>([]);
   const noteNewId = useRef<string | null>();
-
+  const isDeleted = useRef(false);
   if (route.params != undefined) {
     if (
       route.params?.labelDetails != undefined &&
@@ -88,11 +90,9 @@ const Note = ({ route, theme }: NoteScreenProps) => {
       noteIdExist.current = true;
       // if (imageInitData[noteId]) imageInitialData = imageInitData[noteId];
       imageInitialData = route.params.note.imagesURL;
-      const realmImages = realm.objectForPrimaryKey("Image",noteId);
-      console.log(realmImages,'imagess');
-      
-      if(realmImages){
-        imageInitialData=[...imageInitialData,...realmImages.images];
+      const realmImages = realm.objectForPrimaryKey("Image", noteId);
+      if (realmImages) {
+        imageInitialData = [...imageInitialData, ...realmImages.images];
       }
       // if (route.params.note.timestamp !== undefined) {
       //   const formatDate =
@@ -109,7 +109,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
       isCompleteNew.current = true;
     }
   }
-
 
   // const [date, setDate] = useState(dateRef.current);
   const [title, setTitle] = useState(initialTitle);
@@ -149,61 +148,65 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   //   dateRef.current = date;
   // }, [date]);
   const fetchData = async () => {
-    if (!isNew.current) {
-      // if (reminder.current) {
-      //   // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
-      // } else {existingLabel
-      if (!isLoading && isNetworkAvalible) {
-        const urls = await uploadImages(uid, noteId, img.current);
-        await updateNote(
-          uid,
-          noteId,
-          titleRef.current,
-          articleData.current,
-          urls
-        );
-        console.log("note updated");
+    if(!titleRef.current && !articleData.current && !imageData){
+      toastError(TOAST_STRINGS.DELETE_EMPTY_NOTE);
+      handleDelete();
+      return;
+    }
+    else if (!isDeleted.current) {
+      if (!isNew.current) {
+        // if (reminder.current) {
+        //   // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
+        // } else {existingLabel
+        if (!isLoading && isNetworkAvalible) {
+          dispatch(setLoading(true));
+          const urls = await uploadImages(uid, img.current);
+          await updateNote(
+            uid,
+            noteId,
+            titleRef.current,
+            articleData.current,
+            urls
+          );
+          dispatch(setLoading(false));
+        } else {
+          const noteToRealm = {
+            _id: noteId,
+            title: titleRef.current,
+            content: articleData.current,
+            label: labelRef.current,
+            imagesURL: [],
+          };
+          uploadImageToRealm(noteId, img.current, realm);
+          updateNoteInRealm(noteToRealm, realm);
+        }
       } else {
-        const noteToRealm = {
-          _id: noteId,
-          title: titleRef.current,
-          content: articleData.current,
-          label: labelRef.current,
-          imagesURL: [],
-        };
-        uploadImageToRealm(noteId, img.current, realm);
-        updateNoteInRealm(noteToRealm, realm);
+        // if (reminder.current) {
+        //   // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
+        //   // console.log("reminder created success");
+        // } else {
+        if (!isLoading && isNetworkAvalible) {
+          dispatch(setLoading(true));
+          const urls = await uploadImages(uid, img.current);
+          await createNote(
+            uid,
+            labelRef.current,
+            titleRef.current,
+            articleData.current,
+            urls ?? []
+          );
+          dispatch(setLoading(false));
+        } else {
+          const noteToRealm = {
+            title: titleRef.current,
+            content: articleData.current,
+            label: labelRef.current,
+            imagesURL: [],
+          };
+          addNoteToRealm(noteToRealm, img.current, realm);
+        }
+        // }
       }
-      // console.log(img.current);
-      // await uploadImages(uid, noteId, img.current).catch((e) =>
-      //   console.log(e)
-      // );
-      // }
-    } else {
-      // if (reminder.current) {
-      //   // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
-      //   // console.log("reminder created success");
-      // } else {
-      if (!isLoading && isNetworkAvalible) {
-        const urls = await uploadImages(uid, noteId, img.current);
-        await createNote(
-          uid,
-          labelRef.current,
-          titleRef.current,
-          articleData.current,
-          urls ?? []
-        );
-      } else {
-        const noteToRealm = {
-          title: titleRef.current,
-          content: articleData.current,
-          label: labelRef.current,
-          imagesURL: [],
-        };
-        uploadImageToRealm(noteId, img.current, realm);
-        addNoteToRealm(noteToRealm, realm);
-      }
-      // }
     }
     // if (noteIdExist.current) {
     //   dispatch(loadImage({ uid: uid, noteId: noteId, uri: img.current }));
@@ -218,7 +221,7 @@ const Note = ({ route, theme }: NoteScreenProps) => {
     return () => {
       fetchData();
     };
-  }, []);
+  }, [isNetworkAvalible]);
   // const scrollRef = useRef(null);
   // const onCursorPosition = (scrollY:number) => {
   //   if (scrollRef.current) {
@@ -259,11 +262,16 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   };
   const handleDelete = () => {
     if (isNetworkAvalible && !isLoading) {
-      deleteNote(uid, noteId, labelRef.current)
-        .then(() => navigation.goBack())
-        .catch((e) => console.log(e));
+      deleteNote(uid, noteId, labelRef.current,dispatch)
+        .then(() => {
+          toastSuccess(TOAST_STRINGS.NOTES_DELETED);
+          navigation.goBack();
+        })
+        .catch(() => toastError(TOAST_STRINGS.NOTES_DELETION_FAILED));
+      isDeleted.current = true;
     } else {
       deleteNoteFromRealm(noteId, realm);
+      isDeleted.current = true;
       navigation.goBack();
     }
   };
@@ -285,7 +293,7 @@ const Note = ({ route, theme }: NoteScreenProps) => {
         <View>
           <Header
             headerText={labelName.current}
-            showDelete={true}
+            showDelete={isNew.current ?false:true}
             handleDelete={handleDelete}
           />
         </View>
@@ -320,13 +328,20 @@ const Note = ({ route, theme }: NoteScreenProps) => {
             renderItem={({ item }) => (
               <View style={{ paddingHorizontal: widthPercentageToDP("0.5%") }}>
                 <ImageModal
-                  resizeMode="contain"
-                  imageBackgroundColor={THEME.BACKGROUND}
                   style={{
-                    height: heightPercentageToDP("20%%"),
-                    width: heightPercentageToDP("20%"),
+                    width: 250,
+                    height: 250,
                   }}
-                  source={{ uri: item }}
+                  source={{
+                    uri: item,
+                  }}
+                  renderImageComponent={({ source, resizeMode, style }) => (
+                    <FastImage
+                      style={style as StyleProp<ImageStyle>}
+                      source={source as ImageRequireSource}
+                      resizeMode={resizeMode as ResizeMode}
+                    />
+                  )}
                 />
               </View>
             )}

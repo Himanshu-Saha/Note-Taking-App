@@ -13,6 +13,7 @@ import Google from './google';
 import { styles } from './style';
 import { EnterProps } from './type';
 import { RootState } from '../../Store';
+import { toastSuccess } from '../../Utils/toast';
 
 function Enter({ navigation, theme }: EnterProps) {
   const isConnected = useSelector((state: RootState) => state.network.isAvailable)

@@ -40,7 +40,6 @@ export default function Google() {
         const ans = await auth().signInWithCredential(googleCredential);
         if (ans.additionalUserInfo?.isNewUser) {
           signUpUser(ans.user, navigation);
-          console.log("hello noob");
         } else {
           dispatch(updateUser(ans.user));
           dispatch(updateLogIn(true));

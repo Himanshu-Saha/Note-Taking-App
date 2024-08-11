@@ -13,7 +13,6 @@ export const uploadPhoto = async(photo:string,uid:string,noteId:string) => {
             const photoName = item.split('/').pop();
             const folder = `${uid}/${noteId}/${photoName}`;
             const reference = storage().ref(folder);
-      
             await reference.putFile(item);
             const url = await reference.getDownloadURL();
             photoUrls.push(url);

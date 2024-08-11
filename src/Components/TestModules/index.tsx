@@ -25,7 +25,6 @@ const { Counter } = NativeModules;
 
 const NewModuleButton = () => {
   const onPress = () => {
-    console.log(Counter);
   };
 
   return (

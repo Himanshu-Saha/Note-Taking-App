@@ -5,7 +5,9 @@ import {
   ActivityIndicator,
   FlatList,
   ImageBackground,
+  ImageRequireSource,
   SafeAreaView,
+  StyleProp,
   Text,
   View,
 } from "react-native";
@@ -28,6 +30,7 @@ import { RootState } from "../../Store";
 import { colorSchemeState } from "../MainScreen/type";
 import { styles } from "./style";
 import { HomeProps } from "./types";
+import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
 
 function Home({ theme }: HomeProps) {
   const [usedSpace, setUsedSpace] = useState(0);
@@ -46,6 +49,7 @@ function Home({ theme }: HomeProps) {
   const uid = user?.uid;
   const defaultImage = IMAGES.DEFAULTUSER;
   const photoURL = user ? user.photoURL : defaultImage;
+  
   const fetchStorageInfo = useCallback(async () => {
     try {
       const freeDiskStorage = await DeviceInfo.getTotalDiskCapacity();
@@ -91,7 +95,6 @@ function Home({ theme }: HomeProps) {
   if (!user) {
     return null;
   }
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}
@@ -116,6 +119,13 @@ function Home({ theme }: HomeProps) {
                 width: heightPercentageToDP("6.8%"),
               }}
               source={{ uri: photoURL }}
+              renderImageComponent={({ source, resizeMode, style }) => (
+                <FastImage
+                  style={style as StyleProp<ImageStyle>}
+                  source={source as ImageRequireSource}
+                  resizeMode={resizeMode as ResizeMode}
+                />
+              )}
             />
           </View>
         </View>

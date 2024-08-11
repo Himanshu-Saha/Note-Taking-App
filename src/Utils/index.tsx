@@ -12,30 +12,38 @@ import {
   NOTES,
   REALM,
   STRINGS,
+  TOAST_STRINGS,
   YUP_STRINGS,
 } from "../Constants/Strings";
 import { AppDispatch } from "../Store";
 import { updateLogIn, updateProvider, updateUser } from "../Store/Common";
-import { RootStackScreenProps } from "../Types/navigation";
+import { RootStackParamList, RootStackScreenProps } from "../Types/navigation";
 import { Note, valuesTypes } from "./types";
+import { NavigatorScreenParams } from "@react-navigation/native";
+import { setLoading } from "../Store/Loader";
+import { toastError, toastSuccess } from "./toast";
 export const logInUser = async (
   email: string,
   password: string,
-  dispatch: AppDispatch
+  dispatch: AppDispatch,
+  navigation: RootStackScreenProps<keyof RootStackParamList>
 ) => {
   try {
+    dispatch(setLoading(true));
     const userCredential = await auth().signInWithEmailAndPassword(
       email,
       password
     );
-    dispatch(updateLogIn(true));
     dispatch(updateUser(userCredential.user));
-    dispatch(updateProvider(userCredential.user.providerId));
-    await AsyncStorage.clear();
+    dispatch(updateLogIn(true));
     await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true));
     await AsyncStorage.setItem("User", JSON.stringify(userCredential.user));
+    dispatch(setLoading(false));
+    navigation.navigate(SCREEN_CONSTANTS.HomeNavigation);
   } catch (error) {
-    console.error(error);
+    console.error(error, "errhim");
+    toastError(TOAST_STRINGS.LOGIN_FAILED);
+    dispatch(setLoading(false));
   }
 };
 
@@ -45,6 +53,7 @@ export const createUser = async (
   navigation: NativeStackNavigationConfig
 ) => {
   try {
+    dispatch(setLoading(true));
     let userCredentials = await auth().createUserWithEmailAndPassword(
       values.email,
       values.password
@@ -52,9 +61,13 @@ export const createUser = async (
     await userCredentials.user.updateProfile({
       displayName: values.firstName + " " + values.lastName,
     });
-    signUpUser(userCredentials.user, navigation);
+    await signUpUser(userCredentials.user, navigation);
+    toastSuccess(TOAST_STRINGS.SIGNUP_SUCCESS);
+    dispatch(setLoading(false));
   } catch (error) {
-    console.error("Error creating account:");
+    console.error("Error creating account");
+    toastError(TOAST_STRINGS.SIGNUP_FAILED);
+    dispatch(setLoading(false));
   }
 };
 
@@ -120,7 +133,7 @@ export const signUpUser = async (
       batch.set(newDocRef, note);
     });
     await batch.commit();
-    // await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(true))
+
     navigation.navigate(SCREEN_CONSTANTS.Login);
   } catch (error) {
     console.error("Error creating initial database:");
@@ -224,24 +237,29 @@ export const createNote = async (
   content: string,
   imageURL: string[]
 ) => {
-  const labelRef = firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.LABELS)
-    .doc(labelId);
-  const newNoteRef = firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.NOTES)
-    .doc();
-  await newNoteRef.set({
-    label: labelRef,
-    title: title,
-    content: content,
-    time_stamp: firestore.FieldValue.serverTimestamp(),
-    url: imageURL,
-  });
-  await labelRef.update({ count: firestore.FieldValue.increment(1) });
+  try {
+    const labelRef = firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.LABELS)
+      .doc(labelId);
+    const newNoteRef = firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.NOTES)
+      .doc();
+    await newNoteRef.set({
+      label: labelRef,
+      title: title,
+      content: content,
+      time_stamp: firestore.FieldValue.serverTimestamp(),
+      url: imageURL,
+    });
+    await labelRef.update({ count: firestore.FieldValue.increment(1) });
+    toastSuccess(TOAST_STRINGS.NOTES_CREATED);
+  } catch {
+    toastError(TOAST_STRINGS.NOTES_CREATION_FAILED);
+  }
 };
 
 export const updateNote = async (
@@ -251,47 +269,63 @@ export const updateNote = async (
   content: string,
   imageUrl: string[]
 ) => {
-  await firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.NOTES)
-    .doc(noteId)
-    .update({
-      title,
-      content,
-      time_stamp: firestore.FieldValue.serverTimestamp(),
-      url: firestore.FieldValue.arrayUnion(...imageUrl),
-    });
+  try {
+    await firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.NOTES)
+      .doc(noteId)
+      .update({
+        title,
+        content,
+        time_stamp: firestore.FieldValue.serverTimestamp(),
+        url: firestore.FieldValue.arrayUnion(...imageUrl),
+      });
+    toastSuccess(TOAST_STRINGS.NOTES_UPDATED);
+  } catch {
+    toastSuccess(TOAST_STRINGS.NOTES_UPDATE_FAILED);
+  }
 };
 
 export const deleteNote = async (
   uid: string,
   noteId: string,
-  labelId: string
+  labelId: string,
+  dispatch: AppDispatch
 ) => {
-  const userRef = firestore().collection(FIREBASE_STRINGS.USER).doc(uid);
-  const noteRef = userRef.collection(FIREBASE_STRINGS.NOTES).doc(noteId);
-  const labelRef = userRef.collection(FIREBASE_STRINGS.LABELS).doc(labelId);
-  const labelDoc = await labelRef.get();
-  console.log(uid, noteId, labelId);
-  if (!labelDoc.exists) {
-    console.error(`Label with ID ${labelId} does not exist.`);
-    return; // Or handle it as needed
+  try {
+    dispatch(setLoading(true));
+    const userRef = firestore().collection(FIREBASE_STRINGS.USER).doc(uid);
+    const noteRef = userRef.collection(FIREBASE_STRINGS.NOTES).doc(noteId);
+    const labelRef = userRef.collection(FIREBASE_STRINGS.LABELS).doc(labelId);
+    const labelDoc = await labelRef.get();
+    if (!labelDoc.exists) {
+      console.error(`Label with ID ${labelId} does not exist.`);
+      return; // Or handle it as needed
+    }
+    await labelRef.update({ count: firestore.FieldValue.increment(-1) });
+    await noteRef.delete();
+    dispatch(setLoading(false));
+  } catch {
+    dispatch(setLoading(false));
   }
-  await labelRef.update({ count: firestore.FieldValue.increment(-1) });
-  await noteRef.delete();
 };
 
 export const createLabel = async (uid: string, labelName: string) => {
-  await firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.LABELS)
-    .add({
-      count: 0,
-      label: labelName,
-      time_stamp: firestore.FieldValue.serverTimestamp(),
-    });
+  try {
+    await firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.LABELS)
+      .add({
+        count: 0,
+        label: labelName,
+        time_stamp: firestore.FieldValue.serverTimestamp(),
+      });
+    toastSuccess(TOAST_STRINGS.LABEL_CREATED);
+  } catch {
+    toastError(TOAST_STRINGS.LABEL_CREATION_FAILED);
+  }
 };
 
 export const updateLabel = async (
@@ -299,44 +333,54 @@ export const updateLabel = async (
   labelId: string,
   labelName: string
 ) => {
-  await firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.LABELS)
-    .doc(labelId)
-    .update({
-      label: labelName,
-      time_stamp: firestore.FieldValue.serverTimestamp(),
-    });
+  try {
+    await firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.LABELS)
+      .doc(labelId)
+      .update({
+        label: labelName,
+        time_stamp: firestore.FieldValue.serverTimestamp(),
+      });
+    toastSuccess(TOAST_STRINGS.LABEL_UPDATED);
+  } catch {
+    toastError(TOAST_STRINGS.LABEL_UPDATE_FAILED);
+  }
 };
 
 export const deleteLabel = async (uid: string, labelId: string) => {
-  const batch = firestore().batch();
-  const labelRef = firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.LABELS)
-    .doc(labelId);
-  batch.delete(labelRef);
-  const notesRef = firestore()
-    .collection(FIREBASE_STRINGS.USER)
-    .doc(uid)
-    .collection(FIREBASE_STRINGS.NOTES)
-    .where(FIREBASE_STRINGS.LABEL, "==", labelRef);
-  const notesRefList = await notesRef
-    .get()
-    .then((querySnapshot) => {
-      const docRefs = querySnapshot.docs.map((doc) => doc.ref);
-      return docRefs;
-    })
-    .catch((error) => {
-      console.error("Error getting documents: ", error);
-      return [];
+  try {
+    const batch = firestore().batch();
+    const labelRef = firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.LABELS)
+      .doc(labelId);
+    batch.delete(labelRef);
+    const notesRef = firestore()
+      .collection(FIREBASE_STRINGS.USER)
+      .doc(uid)
+      .collection(FIREBASE_STRINGS.NOTES)
+      .where(FIREBASE_STRINGS.LABEL, "==", labelRef);
+    const notesRefList = await notesRef
+      .get()
+      .then((querySnapshot) => {
+        const docRefs = querySnapshot.docs.map((doc) => doc.ref);
+        return docRefs;
+      })
+      .catch((error) => {
+        console.error("Error getting documents: ", error);
+        return [];
+      });
+    notesRefList.forEach((element) => {
+      batch.delete(element);
     });
-  notesRefList.forEach((element) => {
-    batch.delete(element);
-  });
-  await batch.commit();
+    await batch.commit();
+    toastSuccess(TOAST_STRINGS.LABEL_DELETED);
+  } catch {
+    toastError(TOAST_STRINGS.LABEL_DELETION_FAILED);
+  }
 };
 
 export const imageCompressor = async (photo: string) => {
@@ -355,26 +399,20 @@ export const imageCompressor = async (photo: string) => {
   }
 };
 
-export const uploadImages = async (
-  uid: string,
-  noteId: string,
-  imageURL: string[]
-) => {
+export const uploadImages = async (uid: string, imageURL: string[]) => {
   if (!imageURL || imageURL.length === 0) {
-    console.log("Empty imageURL");
-    return;
+    return [];
   }
   const uploadedImageURLs = await Promise.all(
     imageURL.map(async (image) => {
       const photoName = image.split("/").pop();
-      const uniqueId = `${uid}/${noteId}/${new Date().getTime()}-${photoName}`;
+      const uniqueId = `${uid}/${new Date().getTime()}-${photoName}`;
       const reference = storage().ref(uniqueId);
       await reference.putFile(image);
       return reference.getDownloadURL();
     })
   );
   return uploadedImageURLs;
-  console.log("images uploaded successfully");
 };
 
 // realm and firestore
@@ -390,13 +428,9 @@ export async function syncFirestoreToRealm(uid: string, realmInstance: Realm) {
     .doc(uid)
     .collection(FIREBASE_STRINGS.LABELS)
     .get();
-
   realmInstance.write(() => {
-    // realmInstance .deleteAll();
     notesSnapshot.docs.forEach((note) => {
       const data = note.data();
-      // console.log(data);
-
       realmInstance.create(
         "Note",
         {
@@ -414,8 +448,6 @@ export async function syncFirestoreToRealm(uid: string, realmInstance: Realm) {
     });
     labelsSnapshot.docs.forEach((doc) => {
       const data = doc.data();
-      // console.log(data,);
-
       realmInstance.create(
         "Label",
         {
@@ -429,6 +461,19 @@ export async function syncFirestoreToRealm(uid: string, realmInstance: Realm) {
         UpdateMode.Modified
       );
     });
+    // delete cache
+    const realmNotes = realmInstance.objects('Note');
+    const realmLabels = realmInstance.objects('Label');
+    realmLabels.forEach((label)=>{
+      if(label.status !== REALM.STATUS.FIRESTORE){
+        realmInstance.delete(label);
+      }
+    })
+    realmNotes.forEach((note)=>{
+      if(note.status !== REALM.STATUS.FIRESTORE){
+        realmInstance.delete(note);
+      }
+    })
   });
 }
 
@@ -446,11 +491,10 @@ export async function syncRealmImagesToFirestore(
   uid: string,
   realmInstance: Realm
 ) {
-  let allImagesWithNoteId={};
+  let allImagesWithNoteId = {};
   const images = realmInstance.objects("Image");
-  // Sync images
   for (const image of images) {
-    const urls = await uploadImages(uid, image.noteId, image.images);
+    const urls = await uploadImages(uid, image.images);
     allImagesWithNoteId[image.noteId] = urls;
     realmInstance.write(() => {
       realmInstance.delete(image);
@@ -467,11 +511,10 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
     const userRef = firestore().collection(FIREBASE_STRINGS.USER).doc(uid);
     const noteRef = userRef.collection(FIREBASE_STRINGS.NOTES);
     const labelRef = userRef.collection(FIREBASE_STRINGS.LABELS);
-    const URLS = await syncRealmImagesToFirestore(uid,realmInstance);
+    const URLS = await syncRealmImagesToFirestore(uid, realmInstance);
     // Sync notes
     for (const note of notes) {
       if (!note.synced) {
-        console.log(note, "note not synced");
         const docRef = noteRef.doc(note._id);
         try {
           switch (note.status) {
@@ -502,7 +545,6 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
               break;
             case REALM.STATUS.DELETE:
               const docSnapshot = await docRef.get();
-              console.log(docSnapshot.data(), "chicmic");
               if (docSnapshot.exists) {
                 batch.delete(docRef);
               } else {
@@ -563,7 +605,6 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
 
     try {
       await batch.commit();
-      console.log("Batch committed successfully");
     } catch (error) {
       console.error("Batch commit failed:", error);
       notes.forEach((note) => {
@@ -580,7 +621,7 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
 
 // realm
 
-export function addNoteToRealm(note, realmInstance: Realm) {
+export function addNoteToRealm(note, url: string[], realmInstance: Realm) {
   const noteData = {
     _id: generateFirestoreId(),
     title: note.title,
@@ -591,7 +632,7 @@ export function addNoteToRealm(note, realmInstance: Realm) {
     synced: false,
     status: REALM.STATUS.ADD,
   };
-
+  uploadImageToRealm(noteData._id, url, realmInstance);
   realmInstance.write(() => {
     realmInstance.create("Note", noteData);
     let label = realmInstance.objectForPrimaryKey("Label", note.label);
@@ -601,8 +642,7 @@ export function addNoteToRealm(note, realmInstance: Realm) {
       console.error(`Label with ID ${note.label} does not exist.`);
     }
   });
-
-  console.log("Note added to Realm");
+  toastSuccess(TOAST_STRINGS.NOTES_CREATED);
 }
 
 export function updateNoteInRealm(note, realmInstance: Realm) {
@@ -618,12 +658,12 @@ export function updateNoteInRealm(note, realmInstance: Realm) {
         ? REALM.STATUS.ADD
         : REALM.STATUS.MODIFY;
       existingNote.synced = false;
+      toastSuccess(TOAST_STRINGS.NOTES_UPDATED);
     } else {
       console.error(`Note with ID ${note._id} does not exist.`);
+      toastError(TOAST_STRINGS.NOTES_UPDATE_FAILED);
     }
   });
-
-  console.log("Note updated in Realm");
 }
 
 export function deleteNoteFromRealm(noteId: string, realmInstance: Realm) {
@@ -641,8 +681,6 @@ export function deleteNoteFromRealm(noteId: string, realmInstance: Realm) {
           label.count = 0;
         }
       }
-      // realmInstance.delete(noteToDelete);
-      console.log(noteToDelete);
 
       noteToDelete.status = REALM.STATUS.DELETE;
       noteToDelete.synced = false;
@@ -650,8 +688,6 @@ export function deleteNoteFromRealm(noteId: string, realmInstance: Realm) {
       console.error(`Note with ID ${noteId} does not exist.`);
     }
   });
-
-  console.log("Note deleted from Realm");
 }
 
 export function addLabelToRealm(labelName: string, realmInstance: Realm) {
@@ -666,9 +702,8 @@ export function addLabelToRealm(labelName: string, realmInstance: Realm) {
 
   realmInstance.write(() => {
     realmInstance.create("Label", labelData);
+    toastSuccess(TOAST_STRINGS.LABEL_CREATED);
   });
-
-  console.log("Label added to Realm");
 }
 
 export function updateLabelInRealm(
@@ -685,12 +720,11 @@ export function updateLabelInRealm(
         ? REALM.STATUS.ADD
         : REALM.STATUS.MODIFY;
       existingLabel.synced = false;
+      toastSuccess(TOAST_STRINGS.LABEL_UPDATED);
     } else {
-      console.error(`Label with ID ${labelId} does not exist.`);
+      toastError(TOAST_STRINGS.LABEL_UPDATE_FAILED);
     }
   });
-
-  console.log("Label updated in Realm");
 }
 
 export function deleteLabelFromRealm(labelId: string, realmInstance: Realm) {
@@ -701,18 +735,19 @@ export function deleteLabelFromRealm(labelId: string, realmInstance: Realm) {
         .objects("Note")
         .filtered("label = $0", labelId);
       notesToDelete.forEach((note) => {
-        deleteNoteFromRealm(note._id, realmInstance);
+        let noteRef = realmInstance.objectForPrimaryKey("Note", note._id);
+        if (noteRef) {
+          noteRef.status = REALM.STATUS.DELETE;
+          noteRef.synced = false;
+        }
       });
-      // realmInstance.delete(notesToDelete);
-      // realmInstance.delete(labelToDelete);
       labelToDelete.status = REALM.STATUS.DELETE;
       labelToDelete.synced = false;
+      toastSuccess(TOAST_STRINGS.LABEL_DELETED);
     } else {
-      console.error(`Label with ID ${labelId} does not exist.`);
+      toastError(TOAST_STRINGS.LABEL_DELETION_FAILED);
     }
   });
-
-  console.log("Label deleted from Realm");
 }
 
 export function uploadImageToRealm(

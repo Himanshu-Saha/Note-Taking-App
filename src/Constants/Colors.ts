@@ -29,7 +29,9 @@ export const LIGHT_THEME_COLOR = {
         GOOGLE: '#757575',
         SAVE: 'rgb(9,10,10)',
         FOOTER: '#FFFFFF',
-        SETTING_BOX: 'rgb(231,227,242)'
+        SETTING_BOX: 'rgb(231,227,242)',
+        EDIT:'#000000',
+        DELETE:'#000000',
 };
 export const DARK_THEME_COLOR = {
         BACKGROUND: '#292B30', //
@@ -45,7 +47,9 @@ export const DARK_THEME_COLOR = {
         GOOGLE: '#757575',
         SAVE: 'white',
         FOOTER: '#191A1D',
-        SETTING_BOX: 'rgb(73,72,85)'
+        SETTING_BOX: 'rgb(73,72,85)',
+        EDIT:'#ffffff',
+        DELETE:'#ffffff',
 };
 
 export const DEVICE_THEME = {

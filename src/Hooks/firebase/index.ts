@@ -107,28 +107,28 @@ export const useFetchUpdatedLabelData = (
 //   }, []);
 // };
 
-export const useFetchAllNotesData = (
-  userId: string,
-  networkAvailable: boolean
-) => {
-  useEffect(() => {
-    if (networkAvailable && userId) {
-      firestore()
-        .collection(FIREBASE_STRINGS.USER)
-        .doc(userId)
-        .collection(FIREBASE_STRINGS.NOTES)
-        .get()
-        .then((noteData) => {
-          const data = noteData.docs.map((doc) => ({
-            ...doc.data(),
-            _id: doc.id,
-          }));
-          // data.forEach((d) => console.log(d, "data"));
-        })
-        .catch((e) => console.log(e));
-    }
-  }, [networkAvailable, userId]);
-};
+// export const useFetchAllNotesData = (
+//   userId: string,
+//   networkAvailable: boolean
+// ) => {
+//   useEffect(() => {
+//     if (networkAvailable && userId) {
+//       firestore()
+//         .collection(FIREBASE_STRINGS.USER)
+//         .doc(userId)
+//         .collection(FIREBASE_STRINGS.NOTES)
+//         .get()
+//         .then((noteData) => {
+//           const data = noteData.docs.map((doc) => ({
+//             ...doc.data(),
+//             _id: doc.id,
+//           }));
+//           // data.forEach((d) => console.log(d, "data"));
+//         })
+//         .catch((e) => console.log(e));
+//     }
+//   }, [networkAvailable, userId]);
+// };
 
 export const useFirestoreToRealmSync = (
   uid: string,
