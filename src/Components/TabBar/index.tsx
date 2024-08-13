@@ -1,14 +1,14 @@
+import { RouteProp } from "@react-navigation/native";
 import { View } from "react-native";
-import { ICONS } from "../../Constants/Icons";
+import { useSelector } from "react-redux";
 import { SCREEN_CONSTANTS } from "../../Constants";
+import { ICONS } from "../../Constants/Icons";
+import { RootTabParamList } from "../../Types/navigation";
+import withTheme from "../HOC";
 import Icon from "../Icon";
 import Plus from "../Plus/Plus";
-import { useSelector } from "react-redux";
 import { styles } from "./styles";
-import withTheme from "../HOC";
 import { colorSchemeState, myTabBarProps } from "./types";
-import { RouteProp } from "@react-navigation/native";
-import { RootTabParamList } from "../../Types/navigation";
 
 function MyTabBar({state, descriptors, navigation, parentNavigation,theme,setShow,labelData}:myTabBarProps) {
     const colorScheme = useSelector((state:colorSchemeState)=>state.theme.theme)
@@ -88,7 +88,7 @@ function MyTabBar({state, descriptors, navigation, parentNavigation,theme,setSho
                   timestamp: '',
                   newReminder: '',
                 };
-                parentNavigation.navigate(SCREEN_CONSTANTS.Note, {note});
+                // parentNavigation.navigate(SCREEN_CONSTANTS.Note, {note}); uncommnet to enable reminder
               } else if (state.index == 1) {
                 setShow(true);
               } else {  

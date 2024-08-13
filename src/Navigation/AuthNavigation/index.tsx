@@ -3,10 +3,13 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useRealm } from "@realm/react";
 import { useEffect } from "react";
+import Spinner from "react-native-loading-spinner-overlay";
 import { heightPercentageToDP } from "react-native-responsive-screen";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import { SCREEN_CONSTANTS } from "../../Constants";
+import { TOAST_STRINGS } from "../../Constants/Strings";
 import { useNetworkAvailable } from "../../Hooks/network";
 import ForgotPassword from "../../Screens/ForgotPassword";
 import Label from "../../Screens/Labels";
@@ -20,13 +23,9 @@ import { updateLogIn, updateUser } from "../../Store/Common";
 import { setLoading } from "../../Store/Loader";
 import { RootStackParamList } from "../../Types/navigation";
 import { syncFirestoreToRealm, syncRealmToFirestore } from "../../Utils";
+import { toastInfo } from "../../Utils/toast";
 import HomeNavigation from "../HomeNavigation";
 import { authNavigationProps } from "./types";
-import Toast from "react-native-toast-message";
-import { default as auth } from "@react-native-firebase/auth";
-import Spinner from "react-native-loading-spinner-overlay";
-import { toastInfo } from "../../Utils/toast";
-import { TOAST_STRINGS } from "../../Constants/Strings";
 
 function AuthNavigation({ theme }: authNavigationProps) {
   const realm = useRealm();
@@ -84,19 +83,7 @@ function AuthNavigation({ theme }: authNavigationProps) {
           dispatch(setLoading(false));
         });
     } else toastInfo(TOAST_STRINGS.CONNECTION_LOST);
-    // if (isConnected) {
-    //   const intervalId = setInterval(() => {
-    //     const currentUser = auth().currentUser;
-    //     if (currentUser) {
-    //       console.log(currentUser.photoURL);
-    //     }
-    //   }, 10000);
-    //   return () => {
-    //     clearInterval(intervalId);
-    //   };
-    // }
   }, [isConnected]);
-
   return (
     <>
       <NavigationContainer>

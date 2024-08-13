@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { UpdateMode } from "realm";
 import { FIREBASE_STRINGS, REALM } from "../../Constants/Strings";
 import { Note } from "../../RealmDB";
+import { syncRealmToFirestore } from "../../Utils";
 // import { addNoteToRealm, updateNoteInRealm } from "../../RealmDB";
 
 export const useUpdateLabel = (
@@ -146,6 +147,9 @@ export const useFirestoreToRealmSync = (
           snapshot.docChanges().forEach((change) => {
             const data = change.doc.data();
             realmInstance.write(() => {
+              console.log('snapshot');
+              console.log(change.type,data.title);
+                           
               if (change.type === "added" || change.type === "modified") {
                 realmInstance.create(
                   "Note",
@@ -212,11 +216,14 @@ export const useFirestoreToRealmSync = (
           });
         });
       return () => {
+        
+        // if(!isNetworkAvalible)       
+          console.log('unsubscribe list');
         unsubscribeNotes();
         unsubscribeLabels();
       };
     }
-  }, [uid, realmInstance, isLoading, isNetworkAvalible]);
+  }, [uid, realmInstance, isNetworkAvalible]);
 };
 
 export const useLabelsById = (
@@ -244,5 +251,36 @@ export const useLabelsById = (
         notes.removeListener(labelsListener);
       };
     }
-  }, [realm, id, isLoading]);
+  }, [realm,id]);
 };
+
+export function useRealmSync(
+  realmInstance: Realm,
+  uid: string,
+  isConnected: boolean,
+  isLogin:boolean,
+) {
+
+  useEffect(() => {
+    if (!isConnected) return;
+    if(!uid) return;
+    const notes = realmInstance.objects("Note");
+    const labels = realmInstance.objects("Label"); 
+    const syncChanges = async () => {
+      await syncRealmToFirestore(uid, realmInstance);
+    };
+
+    const notesObserver = notes.addListener(() => {
+      syncChanges();
+    });
+
+    const labelsObserver = labels.addListener(() => {
+      syncChanges();
+    });
+
+    return () => {
+      notes.removeListener(notesObserver);
+      labels.removeListener(labelsObserver);
+    };
+  }, [isConnected, realmInstance, uid,isLogin]);
+}

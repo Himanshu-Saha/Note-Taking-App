@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
+import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
 import ImageModal from "react-native-image-modal";
 import {
   heightPercentageToDP,
@@ -24,14 +25,11 @@ import LabelTemplate from "../../Components/LabelTemplate/LabelTemplate";
 import { ICONS } from "../../Constants/Icons";
 import { IMAGES } from "../../Constants/Images";
 import { REALM, STRINGS } from "../../Constants/Strings";
-import { useFirestoreToRealmSync } from "../../Hooks/firebase";
 import { Label } from "../../RealmDB";
 import { RootState } from "../../Store";
 import { colorSchemeState } from "../MainScreen/type";
 import { styles } from "./style";
 import { HomeProps } from "./types";
-import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
-
 function Home({ theme }: HomeProps) {
   const [usedSpace, setUsedSpace] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
@@ -47,9 +45,12 @@ function Home({ theme }: HomeProps) {
     (state: RootState) => state.network.isAvailable
   );
   const uid = user?.uid;
-  const defaultImage = IMAGES.DEFAULTUSER;
-  const photoURL = user ? user.photoURL : defaultImage;
-  
+  // const defaultImage = require(IMAGES.DEFAULTUSER);
+  // const photoURL = user ? user.photoURL : defaultImage;
+  // const userPhoto = photoURL ?? defaultImage
+// console.log(defaultImage,'asdfadsfdsfasdfds',typeof defaultImage);
+// console.log(user.photoURL);
+
   const fetchStorageInfo = useCallback(async () => {
     try {
       const freeDiskStorage = await DeviceInfo.getTotalDiskCapacity();
@@ -60,14 +61,6 @@ function Home({ theme }: HomeProps) {
       // console.error("Error fetching storage info:", error);
     }
   }, []);
-
-  // useEffect(() => {
-  //   if (user) {
-  //     fetchLabels(user.uid);
-  //   }
-  // }, [user]);
-  // useUpdateLabel(uid, setLabel);
-  if (uid) useFirestoreToRealmSync(uid, realm, isLoading, isNetworkAvalible);
   useEffect(() => {
     if (!isLoading) {
       const labels = realm
@@ -83,7 +76,7 @@ function Home({ theme }: HomeProps) {
         labels.removeListener(updateLabels);
       };
     }
-  }, [realm, isLoading]);
+  }, [realm, isLoading, setLabel]);
   useFocusEffect(
     useCallback(() => {
       fetchStorageInfo();
@@ -118,7 +111,7 @@ function Home({ theme }: HomeProps) {
                 height: heightPercentageToDP("6.8%"),
                 width: heightPercentageToDP("6.8%"),
               }}
-              source={{ uri: photoURL }}
+              source={user.photoURL?{uri:user.photoURL}:require('../../Assets/Images/defaultUser.png') }
               renderImageComponent={({ source, resizeMode, style }) => (
                 <FastImage
                   style={style as StyleProp<ImageStyle>}

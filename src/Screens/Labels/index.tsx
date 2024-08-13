@@ -8,9 +8,9 @@ import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import StaggedLabel from "../../Components/Staggered";
 import { SCREEN_CONSTANTS } from "../../Constants";
-import { STRINGS } from "../../Constants/Strings";
-import { useLabelsById } from "../../Hooks/firebase";
+import { REALM, STRINGS } from "../../Constants/Strings";
 import { Note } from "../../RealmDB";
+import { InterstitialAd } from "../../Shared/Services/NativeModules";
 import { RootState } from "../../Store";
 import { styles } from "./style";
 import { LabelProps, labelNotesDataType } from "./types";
@@ -39,12 +39,30 @@ function Label({ navigation, route, theme }: LabelProps) {
     }
   };
   useEffect(() => {
-    // InterstitialAd("ca-app-pub-3940256099942544/1033173712");
+    InterstitialAd("ca-app-pub-3940256099942544/1033173712");
   }, []);
-  useEffect(()=>{
-    setSearchData(notesData)
-  },[notesData])
-  useLabelsById(labelDetails.labelId,realm,setNotesData,isLoading)
+  useEffect(() => {
+    setSearchData(notesData);
+  }, [notesData]);
+  // useLabelsById(labelDetails.labelId,realm,setNotesData,isLoading)
+  useEffect(() => {
+    if (!isLoading) {
+      const notes = realm
+        .objects<Note>("Note")
+        .filtered("label == $0", labelDetails.labelId)
+        .filtered("status != $0", REALM.STATUS.DELETE)
+        .sorted("timestamp", true);
+      const updateLabels = () => {
+        setNotesData([...notes]);
+      };
+      updateLabels();
+      notes.addListener(() => updateLabels());
+      return () => {
+        notes.removeListener(updateLabels);
+      };
+    }
+  }, [realm, isLoading]);
+
   const addNewNote = () => {
     navigation.navigate(SCREEN_CONSTANTS.Note, { labelDetails });
   };
@@ -61,7 +79,7 @@ function Label({ navigation, route, theme }: LabelProps) {
           headerText={labelDetails.labelName}
         />
       </View>
-      <StaggedLabel data={searchData} labelDetails={labelDetails}/>
+      <StaggedLabel data={notesData} labelDetails={labelDetails} />
       <View style={styles.addNotes}>
         <CustomButton
           text={STRINGS.ADD_NEW_NOTES}

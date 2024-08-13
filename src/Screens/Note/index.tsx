@@ -10,7 +10,7 @@ import {
   Platform,
   SafeAreaView,
   TextInput,
-  View
+  View,
 } from "react-native";
 import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
 import ImageModal from "react-native-image-modal";
@@ -148,16 +148,14 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   //   dateRef.current = date;
   // }, [date]);
   const fetchData = async () => {
-    if(!titleRef.current && !articleData.current && !imageData){
+    console.log(titleRef, articleData, imageData);
+
+    if (!titleRef.current && !articleData.current && imageData.length == 0) {
       toastError(TOAST_STRINGS.DELETE_EMPTY_NOTE);
-      handleDelete();
+      // handleDelete();
       return;
-    }
-    else if (!isDeleted.current) {
+    } else if (!isDeleted.current) {
       if (!isNew.current) {
-        // if (reminder.current) {
-        //   // await updateReminder(uid,noteId,titleRef.current,articleData.current,dateRef.current);
-        // } else {existingLabel
         if (!isLoading && isNetworkAvalible) {
           dispatch(setLoading(true));
           const urls = await uploadImages(uid, img.current);
@@ -181,10 +179,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           updateNoteInRealm(noteToRealm, realm);
         }
       } else {
-        // if (reminder.current) {
-        //   // await createReminder(uid,titleRef.current,articleData.current,dateRef.current);
-        //   // console.log("reminder created success");
-        // } else {
         if (!isLoading && isNetworkAvalible) {
           dispatch(setLoading(true));
           const urls = await uploadImages(uid, img.current);
@@ -208,18 +202,18 @@ const Note = ({ route, theme }: NoteScreenProps) => {
         // }
       }
     }
-    // if (noteIdExist.current) {
-    //   dispatch(loadImage({ uid: uid, noteId: noteId, uri: img.current }));
-    // } else if (noteNewId.current) {
-    //   dispatch(
-    //     loadImage({ uid: uid, noteId: noteNewId.current, uri: img.current })
-    //   );
-    // }
   };
-
   useEffect(() => {
+    const fetchDataWrapper = async () => {
+      try {
+        await fetchData();
+      } catch (error) {
+        console.error("Error in fetchData:", error);
+      }
+    };
+
     return () => {
-      fetchData();
+      fetchDataWrapper();
     };
   }, [isNetworkAvalible]);
   // const scrollRef = useRef(null);
@@ -260,19 +254,23 @@ const Note = ({ route, theme }: NoteScreenProps) => {
     RichText.current?.insertLink(link, link);
     setIsDialogVisible(false);
   };
-  const handleDelete = () => {
-    if (isNetworkAvalible && !isLoading) {
-      deleteNote(uid, noteId, labelRef.current,dispatch)
-        .then(() => {
-          toastSuccess(TOAST_STRINGS.NOTES_DELETED);
-          navigation.goBack();
-        })
-        .catch(() => toastError(TOAST_STRINGS.NOTES_DELETION_FAILED));
-      isDeleted.current = true;
-    } else {
-      deleteNoteFromRealm(noteId, realm);
-      isDeleted.current = true;
+  const handleDelete = async () => {
+    isDeleted.current = true; // Set this before the deletion process starts
+    try {
+      if (isNetworkAvalible && !isLoading) {
+        await deleteNote(uid, noteId, labelRef.current, dispatch);
+        console.log("deleted note success");
+
+        toastSuccess(TOAST_STRINGS.NOTES_DELETED);
+      } else {
+        deleteNoteFromRealm(noteId, realm);
+      }
+      console.log("1");
       navigation.goBack();
+      console.log("2");
+    } catch (error) {
+      isDeleted.current = false; // Revert if there's an error
+      toastError(TOAST_STRINGS.NOTES_DELETION_FAILED);
     }
   };
   return (
@@ -293,7 +291,8 @@ const Note = ({ route, theme }: NoteScreenProps) => {
         <View>
           <Header
             headerText={labelName.current}
-            showDelete={isNew.current ?false:true}
+            // showDelete={isNew.current ? false : true}
+            showDelete={false}
             handleDelete={handleDelete}
           />
         </View>
@@ -375,32 +374,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           // onCursorPosition={onCursorPosition}
           useContainer
         />
-        {/* </ScrollView> */}
-        {/* {reminder.current && (
-          <DateTime date={date} setDate={setDate}></DateTime>
-        )} */}
-        {/* {reminder.current ? (
-          <RichToolbar
-            style={[styles.richBar]}
-            editor={RichText}
-            disabled={false}
-            iconTint={"white"}
-            selectedIconTint={"black"}
-            disabledIconTint={"white"}
-            // onPressAddImage={onPressAddImage}
-            iconSize={25}
-            actions={[
-              actions.setBold,
-              actions.setItalic,
-              actions.insertBulletsList,
-              actions.insertOrderedList,
-              actions.insertLink,
-              actions.setStrikethrough,
-              actions.setUnderline,
-            ]}
-            onInsertLink={handleInsertLink}
-          />
-        ) : ( */}
         <RichToolbar
           style={[styles.richBar]}
           editor={RichText}
@@ -408,7 +381,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           iconTint={"white"}
           selectedIconTint={"black"}
           disabledIconTint={"white"}
-          // onPressAddImage={onPressAddImage}
           iconSize={25}
           actions={[
             actions.insertImage,
@@ -430,6 +402,8 @@ const Note = ({ route, theme }: NoteScreenProps) => {
         {/* )} */}
       </KeyboardAvoidingView>
       <CustomDialogInput
+        description={STRINGS.ENTER_LINK_URL}
+        placeholder={STRINGS.ENTER_URL}
         isVisible={isDialogVisible}
         onCancel={handleCancel}
         onSubmit={handleSubmit}

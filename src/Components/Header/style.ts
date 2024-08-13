@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
     text: {
       fontSize: heightPercentageToDP('2.5%'),
       color: LIGHT_THEME_COLOR.TEXT4,
-      paddingTop: 1,
+      paddingTop: 0,
       fontFamily: 'Nunito',
     },
     iconContainer: {

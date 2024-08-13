@@ -1,10 +1,11 @@
 import { useRealm } from "@realm/react";
-import React, { useEffect, useState } from "react";
-import DialogInput from "react-native-dialog-input";
+import React, { useState } from "react";
+import { Button, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSelector } from "react-redux";
-import { STRINGS } from "../../Constants/Strings";
+import { STRINGS, TOAST_STRINGS } from "../../Constants/Strings";
 import { RootState } from "../../Store";
 import { addLabelToRealm, createLabel } from "../../Utils";
+import { toastError } from "../../Utils/toast";
 import withTheme from "../HOC";
 import { addLabelProps } from "./types";
 
@@ -15,7 +16,7 @@ function AddLabel({ uid, show, setShow, theme }: addLabelProps) {
     (state: RootState) => state.network.isAvailable
   );
   const realm = useRealm();
-  useEffect(() => {
+  const createLabelFromDialog = async () => {
     if (newLabelName) {
       const regex = /^[\s\u00A0\xA0]*$/;
       if (uid && !regex.test(newLabelName)) {
@@ -23,26 +24,81 @@ function AddLabel({ uid, show, setShow, theme }: addLabelProps) {
         else {
           addLabelToRealm(newLabelName, realm);
         }
+      } else {
+        toastError(TOAST_STRINGS.EMPTY_LABEL);
       }
     }
-  }, [newLabelName]);
+    setShow(false)
+  };
   return (
-    <DialogInput
-      isDialogVisible={show}
-      title={STRINGS.ADD_LABEL}
-      hintInput={STRINGS.LABEL_NAME}
-      hintTextColor="rgb(9,9,10)"
-      dialogStyle={{}}
-      modalStyle={{}}
-      textInputProps={{ maxLength: 20 }}
-      submitInput={(input: string) => {
-        setNewLabelName(input);
-      }}
-      closeDialog={() => {
-        setShow(false);
-      }}
-    ></DialogInput>
+    <Modal
+      transparent={true}
+      visible={show}
+      animationType="slide"
+      onRequestClose={() => setShow(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View
+          style={[styles.modalContainer, { backgroundColor: theme.BACKGROUND }]}
+        >
+          <Text style={[styles.title, { color: theme.TEXT1 }]}>
+            {STRINGS.ADD_LABEL}
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              { color: theme.TEXT1 },
+            ]}
+            placeholder={STRINGS.LABEL_NAME}
+            placeholderTextColor={theme.TEXT1}
+            maxLength={20}
+            onChangeText={(input) => setNewLabelName(input)}
+            value={newLabelName}
+          />
+          <View style={styles.buttonContainer}>
+            <Button title={STRINGS.CANCEL} onPress={() => setShow(false)} />
+            <Button
+              title={STRINGS.SUBMIT}
+              onPress={() => createLabelFromDialog()}
+              // disabled={newLabelName.trim() === ""}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    width: "80%",
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  input: {
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+});
 
 export default withTheme(AddLabel);

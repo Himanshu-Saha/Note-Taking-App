@@ -16,12 +16,11 @@ import {
   YUP_STRINGS,
 } from "../Constants/Strings";
 import { AppDispatch } from "../Store";
-import { updateLogIn, updateProvider, updateUser } from "../Store/Common";
-import { RootStackParamList, RootStackScreenProps } from "../Types/navigation";
-import { Note, valuesTypes } from "./types";
-import { NavigatorScreenParams } from "@react-navigation/native";
+import { updateLogIn, updateUser } from "../Store/Common";
 import { setLoading } from "../Store/Loader";
+import { RootStackParamList, RootStackScreenProps } from "../Types/navigation";
 import { toastError, toastSuccess } from "./toast";
+import { Note, valuesTypes } from "./types";
 export const logInUser = async (
   email: string,
   password: string,
@@ -41,7 +40,6 @@ export const logInUser = async (
     dispatch(setLoading(false));
     navigation.navigate(SCREEN_CONSTANTS.HomeNavigation);
   } catch (error) {
-    console.error(error, "errhim");
     toastError(TOAST_STRINGS.LOGIN_FAILED);
     dispatch(setLoading(false));
   }
@@ -301,7 +299,6 @@ export const deleteNote = async (
     const labelDoc = await labelRef.get();
     if (!labelDoc.exists) {
       console.error(`Label with ID ${labelId} does not exist.`);
-      return; // Or handle it as needed
     }
     await labelRef.update({ count: firestore.FieldValue.increment(-1) });
     await noteRef.delete();
@@ -462,18 +459,18 @@ export async function syncFirestoreToRealm(uid: string, realmInstance: Realm) {
       );
     });
     // delete cache
-    const realmNotes = realmInstance.objects('Note');
-    const realmLabels = realmInstance.objects('Label');
-    realmLabels.forEach((label)=>{
-      if(label.status !== REALM.STATUS.FIRESTORE){
+    const realmNotes = realmInstance.objects("Note");
+    const realmLabels = realmInstance.objects("Label");
+    realmLabels.forEach((label) => {
+      if (label.status !== REALM.STATUS.FIRESTORE) {
         realmInstance.delete(label);
       }
-    })
-    realmNotes.forEach((note)=>{
-      if(note.status !== REALM.STATUS.FIRESTORE){
+    });
+    realmNotes.forEach((note) => {
+      if (note.status !== REALM.STATUS.FIRESTORE) {
         realmInstance.delete(note);
       }
-    })
+    });
   });
 }
 
@@ -507,6 +504,10 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
   try {
     const notes = realmInstance.objects("Note");
     const labels = realmInstance.objects("Label");
+    if (notes.length === 0 && labels.length === 0) {
+      console.log("empty");
+      return;
+    }
     const batch = firestore().batch();
     const userRef = firestore().collection(FIREBASE_STRINGS.USER).doc(uid);
     const noteRef = userRef.collection(FIREBASE_STRINGS.NOTES);

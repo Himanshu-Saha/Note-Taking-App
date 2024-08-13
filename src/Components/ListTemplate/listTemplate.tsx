@@ -7,7 +7,9 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import FastImage from "react-native-fast-image";
 import RenderHTML, { HTMLSource } from "react-native-render-html";
+import { heightPercentageToDP } from "react-native-responsive-screen";
 import { useSelector } from "react-redux";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { ICONS } from "../../Constants/Icons";
@@ -23,9 +25,6 @@ import withTheme from "../HOC";
 import Icon from "../Icon";
 import { styles } from "./style";
 import { listTemplateTypes } from "./types";
-import { STRINGS } from "../../Constants/Strings";
-import FastImage from "react-native-fast-image";
-import { heightPercentageToDP } from "react-native-responsive-screen";
 function ListTemplate({
   note,
   maxHeight,
@@ -86,6 +85,8 @@ function ListTemplate({
     <>
       {isEditLable && (
         <CustomDialogInput
+          description={"Update Label"}
+          placeholder={"Enter label name"}
           input={label.label}
           isVisible={isDialogInputVisible}
           onCancel={() => setIsDialogInputVisible(false)}
@@ -127,7 +128,7 @@ function ListTemplate({
                     height: heightPercentageToDP("10%"),
                     width: "90%",
                     alignSelf: "center",
-                    borderRadius:5
+                    borderRadius: 5,
                   }}
                   source={{ uri: image }}
                 />
