@@ -13,10 +13,10 @@ import { Note } from "../../RealmDB";
 import { InterstitialAd } from "../../Shared/Services/NativeModules";
 import { RootState } from "../../Store";
 import { styles } from "./style";
-import { LabelProps, labelNotesDataType } from "./types";
+import { LabelProps } from "./types";
 
 function Label({ navigation, route, theme }: LabelProps) {
-  const [searchData, setSearchData] = useState<labelNotesDataType>([]);
+  const [searchData, setSearchData] = useState<Note[]>();
   const [notesData, setNotesData] = useState<Note[]>();
   const user = useSelector((state: RootState) => state.common.user);
   const isLoading = useSelector((state: RootState) => state.loader.isLoading);
@@ -31,8 +31,8 @@ function Label({ navigation, route, theme }: LabelProps) {
     if (notesData) {
       let filteredData = notesData.filter((item) => {
         return (
-          item.content.toLowerCase().match(text) ||
-          item.title.toLowerCase().match(text)
+          item.content?.toLowerCase().match(text) ||
+          item.title?.toLowerCase().match(text)
         );
       });
       setSearchData(filteredData);
@@ -74,7 +74,7 @@ function Label({ navigation, route, theme }: LabelProps) {
       <View>
         <Search
           onChangeText={search}
-          handleSetInittialOnBlur={() => setSearchData(notesData)}
+          // handleSetInittialOnBlur={() => setSearchData(notesData)}
           notesData={notesData}
           headerText={labelDetails.labelName}
         />

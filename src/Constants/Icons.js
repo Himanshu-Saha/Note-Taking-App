@@ -1,6 +1,5 @@
 import React from 'react'
 import { RFValue } from 'react-native-responsive-fontsize'
-import ACADEMIC from '../Assets/Svg/academic.svg'
 import ADD from '../Assets/Svg/add.svg'
 import BACK from '../Assets/Svg/back.svg'
 import BELL from '../Assets/Svg/bell.svg'
@@ -37,7 +36,6 @@ import SETTING from '../Assets/Svg/setting.svg'
 import SETTING_BLACK from '../Assets/Svg/setting_black.svg'
 import SETTINGS_BLACK_DARK from '../Assets/Svg/setting_black_dark.svg'
 import SETTINGS_DARK from '../Assets/Svg/setting_dark.svg'
-import WORK from '../Assets/Svg/work.svg'
 const iconStyle = (
   width = 0,
   height = 0,
@@ -54,10 +52,8 @@ export const ICONS = {
   BELL: (...params) => <BELL {...iconStyle(...params)} />,
   EDIT: (...params) => <EDIT {...iconStyle(...params)} />,
   DAIRY: (...params) => <DAIRY {...iconStyle(...params)} />,
-  ACADEMIC: (...params) => <ACADEMIC {...iconStyle(...params)} />,
   OTHERS: (...params) => <OTHERS {...iconStyle(...params)} />,
   PERSONAL: (...params) => <PERSONAL {...iconStyle(...params)} />,
-  WORK: (...params) => <WORK {...iconStyle(...params)} />,
   PIECHART: (...params) => <PIECHART {...iconStyle(...params)} />,
   CHECKS: (...params) => <CHECKS {...iconStyle(...params)} />,
   DOC: (...params) => <DOC {...iconStyle(...params)} />,

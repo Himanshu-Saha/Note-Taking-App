@@ -4,5 +4,4 @@ export const IMAGES = {
     HOME: require('../Assets/Background/home.png'),
     DEFAULTUSER: '../Assets/Images/defaultUser.png',
     HOME_DARK: require('../Assets/Background/home_dark.png'),
-    CLOSED_EYE: require('../Assets/Images/eyeClose.png')
   }

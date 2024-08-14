@@ -2,7 +2,7 @@ import { Note } from "../../RealmDB";
 
 export type StaggedLabelProps = {
   data: Note[] | undefined;
-  labelDetails:{ labelId: string; labelName: string } 
+  labelDetails:{ labelDetails?: { labelId: string; labelName: string } }
 };
 
 type itemType = {

@@ -166,7 +166,6 @@ export const fetchAllData = async (uid: string) => {
   try {
     await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).get();
   } catch (e) {
-    // console.log(e, 91);
   }
 };
 
@@ -209,7 +208,6 @@ export const fetchNotesWithLabel = async (
       .orderBy(FIREBASE_STRINGS.TIME_STAMP, FIREBASE_STRINGS.ORDER)
       .get();
     if (notesData.empty) {
-      console.log("No matching documents found.");
       setNotesData([]);
       return;
     }
@@ -548,8 +546,6 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
               const docSnapshot = await docRef.get();
               if (docSnapshot.exists) {
                 batch.delete(docRef);
-              } else {
-                console.log(`Note with ID ${note._id} already deleted.`);
               }
               realmInstance.write(() => (note.synced = true));
               break;
@@ -682,7 +678,6 @@ export function deleteNoteFromRealm(noteId: string, realmInstance: Realm) {
           label.count = 0;
         }
       }
-
       noteToDelete.status = REALM.STATUS.DELETE;
       noteToDelete.synced = false;
     } else {

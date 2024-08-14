@@ -20,13 +20,13 @@ export const styles = StyleSheet.create({
         fontFamily:'Nunito', 
         fontWeight:'bold',
         color:LIGHT_THEME_COLOR.TEXT2,
-        fontSize:heightPercentageToDP('3.2%')       
+        fontSize:heightPercentageToDP('3.5%')       
     },
     text2:{
         fontFamily:'Nunito', 
         fontWeight:'bold',
         color:LIGHT_THEME_COLOR.TEXT1,
-        fontSize:heightPercentageToDP('3.2%')        
+        fontSize:heightPercentageToDP('3.5%')        
     },
     textSave:{
         fontSize:heightPercentageToDP('3%'),
@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     },
     svg:{
         marginVertical:heightPercentageToDP('5%'),
-        paddingLeft:widthPercentageToDP('6%')
+        paddingLeft:widthPercentageToDP('30%')
     },
     simpleText:{
         fontSize:heightPercentageToDP('1.8%'),

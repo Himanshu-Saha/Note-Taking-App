@@ -33,26 +33,19 @@ function Setting({ navigation, theme }: SettingProps) {
   const signOut = async () => {
     try {
       if (user?.providerId !== "google.com") {
-        await auth()
-          .signOut()
-          .catch((e) => console.log(e));
+        await auth().signOut();
         dispatch(updateLogIn(false));
         dispatch(updateUser(null));
-        // await AsyncStorage.setItem(STRINGS.IS_LOGGED_IN, JSON.stringify(false));
-        await AsyncStorage.clear()
-          .then(() => console.log("clear"))
-          .catch((e) => console.log(e, "async erroe"));
-        realm.write(()=>realm.deleteAll());
+        await AsyncStorage.clear();
+        realm.write(() => realm.deleteAll());
         navigation.navigate(SCREEN_CONSTANTS.Enter);
       } else {
         try {
-          await GoogleSignin.signOut().catch((e) => console.log(e));
+          await GoogleSignin.signOut();
           dispatch(updateLogIn(false));
           dispatch(updateUser(null));
-          await AsyncStorage.clear()
-          .then(() => console.log("clear"))
-          .catch((e) => console.log(e, "async error"));
-          realm.write(()=>realm.deleteAll());
+          await AsyncStorage.clear();
+          realm.write(() => realm.deleteAll());
           navigation.navigate(SCREEN_CONSTANTS.Enter);
         } catch (error) {
           console.error(error);
@@ -60,7 +53,7 @@ function Setting({ navigation, theme }: SettingProps) {
       }
       // console.log("data removed to storage logout");
     } catch (e) {
-      // console.log(e);
+      console.log(e);
     }
   };
 

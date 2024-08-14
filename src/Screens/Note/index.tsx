@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  StyleProp,
   TextInput,
   View,
 } from "react-native";
@@ -148,15 +149,13 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   //   dateRef.current = date;
   // }, [date]);
   const fetchData = async () => {
-    console.log(titleRef, articleData, imageData);
-
     if (!titleRef.current && !articleData.current && imageData.length == 0) {
       toastError(TOAST_STRINGS.DELETE_EMPTY_NOTE);
       // handleDelete();
       return;
     } else if (!isDeleted.current) {
       if (!isNew.current) {
-        if (!isLoading && isNetworkAvalible) {
+        if (!isLoading && isNetworkAvalible && uid) {
           dispatch(setLoading(true));
           const urls = await uploadImages(uid, img.current);
           await updateNote(
@@ -179,7 +178,7 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           updateNoteInRealm(noteToRealm, realm);
         }
       } else {
-        if (!isLoading && isNetworkAvalible) {
+        if (!isLoading && isNetworkAvalible && uid) {
           dispatch(setLoading(true));
           const urls = await uploadImages(uid, img.current);
           await createNote(
@@ -257,17 +256,13 @@ const Note = ({ route, theme }: NoteScreenProps) => {
   const handleDelete = async () => {
     isDeleted.current = true; // Set this before the deletion process starts
     try {
-      if (isNetworkAvalible && !isLoading) {
+      if (isNetworkAvalible && !isLoading && uid) {
         await deleteNote(uid, noteId, labelRef.current, dispatch);
-        console.log("deleted note success");
-
         toastSuccess(TOAST_STRINGS.NOTES_DELETED);
       } else {
         deleteNoteFromRealm(noteId, realm);
       }
-      console.log("1");
       navigation.goBack();
-      console.log("2");
     } catch (error) {
       isDeleted.current = false; // Revert if there's an error
       toastError(TOAST_STRINGS.NOTES_DELETION_FAILED);

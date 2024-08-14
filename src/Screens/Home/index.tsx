@@ -45,21 +45,13 @@ function Home({ theme }: HomeProps) {
     (state: RootState) => state.network.isAvailable
   );
   const uid = user?.uid;
-  // const defaultImage = require(IMAGES.DEFAULTUSER);
-  // const photoURL = user ? user.photoURL : defaultImage;
-  // const userPhoto = photoURL ?? defaultImage
-// console.log(defaultImage,'asdfadsfdsfasdfds',typeof defaultImage);
-// console.log(user.photoURL);
-
   const fetchStorageInfo = useCallback(async () => {
     try {
       const freeDiskStorage = await DeviceInfo.getTotalDiskCapacity();
       const usedMemory = await DeviceInfo.getUsedMemory();
       setFreeSpace(freeDiskStorage);
       setUsedSpace(usedMemory);
-    } catch (error) {
-      // console.error("Error fetching storage info:", error);
-    }
+    } catch (error) {}
   }, []);
   useEffect(() => {
     if (!isLoading) {
@@ -77,6 +69,8 @@ function Home({ theme }: HomeProps) {
       };
     }
   }, [realm, isLoading, setLabel]);
+
+  
   useFocusEffect(
     useCallback(() => {
       fetchStorageInfo();
@@ -84,7 +78,6 @@ function Home({ theme }: HomeProps) {
   );
   const bytesToGB = (bytes: number) =>
     (bytes / (1024 * 1024 * 1024)).toFixed(2);
-
   if (!user) {
     return null;
   }
@@ -111,7 +104,11 @@ function Home({ theme }: HomeProps) {
                 height: heightPercentageToDP("6.8%"),
                 width: heightPercentageToDP("6.8%"),
               }}
-              source={user.photoURL?{uri:user.photoURL}:require('../../Assets/Images/defaultUser.png') }
+              source={
+                user.photoURL
+                  ? { uri: user.photoURL }
+                  : require("../../Assets/Images/defaultUser.png")
+              }
               renderImageComponent={({ source, resizeMode, style }) => (
                 <FastImage
                   style={style as StyleProp<ImageStyle>}

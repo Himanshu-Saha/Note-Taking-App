@@ -24,7 +24,7 @@ function ADD_LABELS({ theme }: addLabelProp) {
   // useUpdateLabel(uid, setNotesData);
   useEffect(() => {
     if (!isLoading) {
-      const labels = realm.objects<Label>("Label").filtered("status != $0", REALM.STATUS.DELETE).sorted("timestamp", true); // true for descending order
+      const labels = realm.objects<Label>("Label").filtered("status != $0", REALM.STATUS.DELETE).sorted("timestamp", true);
       const updateLabels = () => {
         setLabel([...labels]);
       };

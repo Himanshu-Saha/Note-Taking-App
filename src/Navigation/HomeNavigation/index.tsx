@@ -7,7 +7,6 @@ import AddLabel from "../../Components/AddLabel";
 import withTheme from "../../Components/HOC";
 import MyTabBar from "../../Components/TabBar";
 import { SCREEN_CONSTANTS } from "../../Constants";
-import { useFirestoreToRealmSync } from "../../Hooks/firebase";
 import { Label } from "../../RealmDB";
 import ADD_LABELS from "../../Screens/AddLabels";
 import Home from "../../Screens/Home";
@@ -16,7 +15,6 @@ import Reminder from "../../Screens/Reminder";
 import Setting from "../../Screens/Setting";
 import { RootState } from "../../Store";
 import { RootTabParamList } from "../../Types/navigation";
-import { syncFirestoreToRealm } from "../../Utils";
 import { HomeNavigationProps } from "./types";
 
 function HomeNavigation({ theme }: HomeNavigationProps) {
@@ -44,10 +42,6 @@ function HomeNavigation({ theme }: HomeNavigationProps) {
       };
     }
   }, [realm,isLoading]);
-  useEffect(()=>{
-    syncFirestoreToRealm(user?.uid, realm)
-  },[])
-  useFirestoreToRealmSync(uid, realm, isLoading, isConnected);
   return (
     <>
       <Tab.Navigator

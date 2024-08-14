@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { TOAST_STRINGS } from "../../Constants/Strings";
+import { useFirestoreToRealmSync } from "../../Hooks/firebase";
 import { useNetworkAvailable } from "../../Hooks/network";
 import ForgotPassword from "../../Screens/ForgotPassword";
 import Label from "../../Screens/Labels";
@@ -84,6 +85,7 @@ function AuthNavigation({ theme }: authNavigationProps) {
         });
     } else toastInfo(TOAST_STRINGS.CONNECTION_LOST);
   }, [isConnected]);
+  useFirestoreToRealmSync(user?.uid, realm, isLoading, isConnected);
   return (
     <>
       <NavigationContainer>

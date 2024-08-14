@@ -75,70 +75,14 @@ export const useFetchUpdatedLabelData = (
   }, []);
 };
 
-// export const useFirebaseListener = (userId: string) => {
-//   useEffect(() => {
-//     if (userId) {
-//       const unsubscribe = firestore()
-//         .collection(FIREBASE_STRINGS.USER)
-//         .doc(userId)
-//         .collection(FIREBASE_STRINGS.NOTES)
-//         .onSnapshot((snapshot) => {
-//           snapshot.docChanges().forEach((change) => {
-//             const noteData = change.doc.data();
-
-//             switch (change.type) {
-//               case "added":
-//                 // console.log(noteData,'added');
-//                 // console.log(noteData);
-//                 // addNoteToRealm(noteData);
-//                 break;
-//               case "modified":
-//                 // console.log(noteData,'Updated');
-
-//                 // updateNoteInRealm(noteData);
-//                 break;
-//               // case "removed":
-//               //   deleteNoteFromRealm(noteData.id);
-//               //   break;
-//             }
-//           });
-//         });
-//       return () => unsubscribe();
-//     }
-//   }, []);
-// };
-
-// export const useFetchAllNotesData = (
-//   userId: string,
-//   networkAvailable: boolean
-// ) => {
-//   useEffect(() => {
-//     if (networkAvailable && userId) {
-//       firestore()
-//         .collection(FIREBASE_STRINGS.USER)
-//         .doc(userId)
-//         .collection(FIREBASE_STRINGS.NOTES)
-//         .get()
-//         .then((noteData) => {
-//           const data = noteData.docs.map((doc) => ({
-//             ...doc.data(),
-//             _id: doc.id,
-//           }));
-//           // data.forEach((d) => console.log(d, "data"));
-//         })
-//         .catch((e) => console.log(e));
-//     }
-//   }, [networkAvailable, userId]);
-// };
-
 export const useFirestoreToRealmSync = (
-  uid: string,
+  uid: string | undefined,
   realmInstance: Realm,
   isLoading: boolean,
   isNetworkAvalible: boolean
 ) => {
   useEffect(() => {
-    if (!isLoading && isNetworkAvalible) {
+    if (!isLoading && isNetworkAvalible && uid) {
       const unsubscribeNotes = firestore()
         .collection(FIREBASE_STRINGS.USER)
         .doc(uid)
@@ -147,9 +91,6 @@ export const useFirestoreToRealmSync = (
           snapshot.docChanges().forEach((change) => {
             const data = change.doc.data();
             realmInstance.write(() => {
-              console.log('snapshot');
-              console.log(change.type,data.title);
-                           
               if (change.type === "added" || change.type === "modified") {
                 realmInstance.create(
                   "Note",
@@ -216,9 +157,6 @@ export const useFirestoreToRealmSync = (
           });
         });
       return () => {
-        
-        // if(!isNetworkAvalible)       
-          console.log('unsubscribe list');
         unsubscribeNotes();
         unsubscribeLabels();
       };
@@ -251,21 +189,20 @@ export const useLabelsById = (
         notes.removeListener(labelsListener);
       };
     }
-  }, [realm,id]);
+  }, [realm, id]);
 };
 
 export function useRealmSync(
   realmInstance: Realm,
   uid: string,
   isConnected: boolean,
-  isLogin:boolean,
+  isLogin: boolean
 ) {
-
   useEffect(() => {
     if (!isConnected) return;
-    if(!uid) return;
+    if (!uid) return;
     const notes = realmInstance.objects("Note");
-    const labels = realmInstance.objects("Label"); 
+    const labels = realmInstance.objects("Label");
     const syncChanges = async () => {
       await syncRealmToFirestore(uid, realmInstance);
     };
@@ -282,5 +219,5 @@ export function useRealmSync(
       notes.removeListener(notesObserver);
       labels.removeListener(labelsObserver);
     };
-  }, [isConnected, realmInstance, uid,isLogin]);
+  }, [isConnected, realmInstance, uid, isLogin]);
 }
