@@ -7,7 +7,8 @@ export const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginHorizontal: widthPercentageToDP('2%'),
-      marginVertical: heightPercentageToDP('1.5%'),
+      marginTop:heightPercentageToDP('1.5%'),
+      marginBottom:heightPercentageToDP('2.2%'),
     },
     searchContainer: {
       flexDirection: 'row',
@@ -22,10 +23,9 @@ export const styles = StyleSheet.create({
     headerText: {
       fontFamily: 'Nunito',
       fontWeight: 'bold',
-      fontSize: heightPercentageToDP('2.2%'),
-      marginLeft: widthPercentageToDP('9%'),
+      fontSize: heightPercentageToDP('2.5%'),
+      marginLeft: widthPercentageToDP('5%'),
       color: LIGHT_THEME_COLOR.TEXT1,
-      // marginHorizontal:60
     },
     leftHeader: {
       flexDirection: 'row',
@@ -34,9 +34,9 @@ export const styles = StyleSheet.create({
       width: widthPercentageToDP('25%'),
     },
     text: {
-      fontSize: heightPercentageToDP('2%'),
+      fontSize: heightPercentageToDP('2.5%'),
       color: LIGHT_THEME_COLOR.TEXT4,
-      paddingTop: 2,
+      paddingTop: 0,
       fontFamily: 'Nunito',
     },
     iconContainer: {

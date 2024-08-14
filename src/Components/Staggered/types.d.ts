@@ -1,14 +1,15 @@
-import { labelNotesDataType } from "../../Screens/Labels/types";
+import { Note } from "../../RealmDB";
 
 export type StaggedLabelProps = {
-    data:labelNotesDataType
-}
+  data: Note[] | undefined;
+  labelDetails:{ labelDetails?: { labelId: string; labelName: string } }
+};
 
-type itemType ={
-    title: string;
-    data: string;
-    id: string;
-    noteId: string;
-    label: string;
-    ImageUrl: string[];
-}
+type itemType = {
+  title: string;
+  data: string;
+  id: string;
+  noteId: string;
+  label: string;
+  ImageUrl: string[];
+};

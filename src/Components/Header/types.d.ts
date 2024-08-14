@@ -1,10 +1,9 @@
-import { labelNotesDataType } from "../../Screens/Labels/types";
-import { reminderNotesDataType } from "../../Screens/Reminder/types";
+import { Note } from "../../RealmDB";
 import { WithThemeProps } from "../HOC";
 
 export interface headerTypes extends WithThemeProps{
   onChangeText?:(e:string)=>void,
-  notesData?:reminderNotesDataType|labelNotesDataType|null,
+  notesData?:Note[],
   headerText:string,
   // theme?:themeType,
   handleSetInittialOnBlur?: () => void,

@@ -1,4 +1,4 @@
-import { default as auth } from "@react-native-firebase/auth";
+  import { default as auth } from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { FlatList, SafeAreaView, Text, View } from "react-native";

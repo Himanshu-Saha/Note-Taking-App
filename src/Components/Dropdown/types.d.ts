@@ -1,11 +1,10 @@
 
-import { LabelData } from "../../Navigation/HomeNavigation/types";
-import { labelNotesDataType } from "../../Screens/Labels/types";
-import { WithThemeProps, themeType } from "../HOC";
+import { Label } from "../../RealmDB";
+import { WithThemeProps } from "../HOC";
 
 
 export interface dropdownComponentProps extends WithThemeProps{
-    data:LabelData,
+    data:Label[],
     value:string, 
     setValue:(key:string)=>void,
     // theme?:themeType

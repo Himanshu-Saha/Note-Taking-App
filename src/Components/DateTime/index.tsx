@@ -1,4 +1,4 @@
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+// import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import withTheme from '../HOC';
@@ -11,11 +11,11 @@ function DateTime({date, setDate,theme}:dateTimeProps) {
 
   const THEME = theme
   
-  const onChange = (event:DateTimePickerEvent,selectedDate:Date|undefined) => {
-    setShow(false);
-    if(selectedDate)
-    setDate(selectedDate);
-  };
+  // const onChange = (event:DateTimePickerEvent,selectedDate:Date|undefined) => {
+  //   setShow(false);
+  //   if(selectedDate)
+  //   setDate(selectedDate);
+  // };
 
   const showMode = (currentMode:'date'|'time') => {
     setShow(true);
@@ -59,13 +59,13 @@ function DateTime({date, setDate,theme}:dateTimeProps) {
         </View>
       </View>
       {show && (
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode={mode}
-          is24Hour={true}
-          onChange={onChange}
-        />
+        // <DateTimePicker
+        //   testID="dateTimePicker"
+        //   value={date}
+        //   mode={mode}
+        //   is24Hour={true}
+        //   onChange={onChange}
+        // />
       )}
     </>
   );

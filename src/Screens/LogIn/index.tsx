@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Alert, SafeAreaView, Text, View } from "react-native";
-import { useDispatch } from "react-redux";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import CustomButton from "../../Components/Button/customButton";
@@ -8,7 +7,6 @@ import FormikTemplate from "../../Components/FormikTemplate";
 import withTheme from "../../Components/HOC";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { STRINGS, YUP_STRINGS } from "../../Constants/Strings";
-import { logIn, updateUser } from "../../Store/Common";
 import { useAppDispatch, useAppSelector } from "../../Store";
 import { styles } from "./style";
 import { LogInProps } from "./types";
@@ -23,14 +21,9 @@ const SignupSchema = Yup.object().shape({
 
 const LogIn: React.FC<LogInProps> = ({ navigation, theme }) => {
   const [errorLogin, setErrorLogin] = useState(false);
-
   const isLogedIn = useAppSelector((state) => state.common.isLogedIn);
   const dispatch = useAppDispatch();
-
   const THEME = theme;
-
-
-
   const forgot = () => {
     navigation.navigate(SCREEN_CONSTANTS.ForgotPassword);
   };
@@ -49,7 +42,7 @@ const LogIn: React.FC<LogInProps> = ({ navigation, theme }) => {
             initialValues={{ email: "", password: "" }}
             validationSchema={SignupSchema}
             onSubmit={(values) => {
-              logInUser(values.email, values.password,dispatch);
+              logInUser(values.email, values.password,dispatch,navigation);
             }}
           >
             {({

@@ -1,15 +1,18 @@
-import { default as auth } from "@react-native-firebase/auth";
 import { useFocusEffect } from "@react-navigation/native";
+import { useRealm } from "@realm/react";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   ImageBackground,
+  ImageRequireSource,
   SafeAreaView,
+  StyleProp,
   Text,
-  View
+  View,
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
+import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
 import ImageModal from "react-native-image-modal";
 import {
   heightPercentageToDP,
@@ -21,70 +24,67 @@ import withTheme from "../../Components/HOC";
 import LabelTemplate from "../../Components/LabelTemplate/LabelTemplate";
 import { ICONS } from "../../Constants/Icons";
 import { IMAGES } from "../../Constants/Images";
-import { STRINGS } from "../../Constants/Strings";
-import { useFirestoreToRealmSync, useUpdateLabel } from "../../Hooks/firebase";
-import { fetchLabels, syncFirestoreToRealm, syncRealmToFirestore } from "../../Utils";
+import { REALM, STRINGS } from "../../Constants/Strings";
+import { Label } from "../../RealmDB";
+import { RootState } from "../../Store";
 import { colorSchemeState } from "../MainScreen/type";
 import { styles } from "./style";
-import { HomeProps, newDataType } from "./types";
-import { RootState } from "../../Store";
-import { useQuery, useRealm } from "@realm/react";
-
+import { HomeProps } from "./types";
 function Home({ theme }: HomeProps) {
   const [usedSpace, setUsedSpace] = useState(0);
   const [freeSpace, setFreeSpace] = useState(0);
-  const [label, setLabel] = useState<newDataType | null>();
-  const colorScheme = useSelector((state: colorSchemeState) => state.theme.theme);
+  const realm = useRealm();
+  const [label, setLabel] = useState<Label[]>();
+  const colorScheme = useSelector(
+    (state: colorSchemeState) => state.theme.theme
+  );
   const THEME = theme;
   const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
+  const isNetworkAvalible = useSelector(
+    (state: RootState) => state.network.isAvailable
+  );
   const uid = user?.uid;
-  const defaultImage = IMAGES.DEFAULTUSER;
-  const photoURL = user ? user.photoURL : defaultImage;
   const fetchStorageInfo = useCallback(async () => {
     try {
       const freeDiskStorage = await DeviceInfo.getTotalDiskCapacity();
       const usedMemory = await DeviceInfo.getUsedMemory();
       setFreeSpace(freeDiskStorage);
       setUsedSpace(usedMemory);
-    } catch (error) {
-      // console.error("Error fetching storage info:", error);
-    }
+    } catch (error) {}
   }, []);
-
   useEffect(() => {
-    if (user) {
-      fetchLabels(user.uid);
+    if (!isLoading) {
+      const labels = realm
+        .objects<Label>("Label")
+        .filtered("status != $0", REALM.STATUS.DELETE)
+        .sorted("timestamp", true);
+      const updateLabels = () => {
+        setLabel([...labels]);
+      };
+      updateLabels();
+      labels.addListener(() => updateLabels());
+      return () => {
+        labels.removeListener(updateLabels);
+      };
     }
-  }, [user]);
-  const realm = useRealm();
-  useUpdateLabel(uid, setLabel);
-  useEffect(() => {
-    syncFirestoreToRealm(user.uid, realm).then(() => {
-      console.log('done imporit');
-    }).catch(e => console.log(e, 'error')
-    )
-    const notes = realm.objects('Note');
-    const notesListener = notes.addListener(() => {
-      const notes = realm.objects('Note'); console.log(notes,'lala notes');
-    });
-    return () => {
-      realm.removeAllListeners();
-    };
-  }, [])
-  useFirestoreToRealmSync(uid);
+  }, [realm, isLoading, setLabel]);
+
+  
   useFocusEffect(
     useCallback(() => {
       fetchStorageInfo();
     }, [fetchStorageInfo])
   );
-  const bytesToGB = (bytes: number) => (bytes / (1024 * 1024 * 1024)).toFixed(2);
-
+  const bytesToGB = (bytes: number) =>
+    (bytes / (1024 * 1024 * 1024)).toFixed(2);
   if (!user) {
     return null;
   }
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}
+    >
       <View style={styles.subcontainer}>
         <View style={styles.header}>
           <View>
@@ -104,7 +104,18 @@ function Home({ theme }: HomeProps) {
                 height: heightPercentageToDP("6.8%"),
                 width: heightPercentageToDP("6.8%"),
               }}
-              source={{ uri: photoURL }}
+              source={
+                user.photoURL
+                  ? { uri: user.photoURL }
+                  : require("../../Assets/Images/defaultUser.png")
+              }
+              renderImageComponent={({ source, resizeMode, style }) => (
+                <FastImage
+                  style={style as StyleProp<ImageStyle>}
+                  source={source as ImageRequireSource}
+                  resizeMode={resizeMode as ResizeMode}
+                />
+              )}
             />
           </View>
         </View>
@@ -116,8 +127,16 @@ function Home({ theme }: HomeProps) {
             >
               <View style={styles.imageInner}>
                 {colorScheme === "light"
-                  ? ICONS.PIECHART(heightPercentageToDP("8.2%"), heightPercentageToDP("8.2%"), "none")
-                  : ICONS.PIECHART_BLACK(heightPercentageToDP("8.2%"), heightPercentageToDP("8.2%"), "none")}
+                  ? ICONS.PIECHART(
+                      heightPercentageToDP("8.2%"),
+                      heightPercentageToDP("8.2%"),
+                      "none"
+                    )
+                  : ICONS.PIECHART_BLACK(
+                      heightPercentageToDP("8.2%"),
+                      heightPercentageToDP("8.2%"),
+                      "none"
+                    )}
                 <View style={{ paddingLeft: widthPercentageToDP("7%") }}>
                   <Text style={[styles.text]}>{STRINGS.AVAILABLE_SPACE}</Text>
                   <Text style={[styles.size, { color: THEME.HOMESIZE }]}>
@@ -137,11 +156,12 @@ function Home({ theme }: HomeProps) {
                 numColumns={2}
                 renderItem={({ item }) => (
                   <LabelTemplate
-                    icon={colorScheme === "light" ? ICONS.OTHERS : ICONS.INTEL_BLACK}
-                    labelName={item.labelName}
-                    labelId={item.labelId}
+                    icon={
+                      colorScheme === "light" ? ICONS.OTHERS : ICONS.INTEL_BLACK
+                    }
+                    labelName={item.label}
+                    labelId={item._id}
                     numberOfNotes={item.count}
-                    uid={user.uid}
                   />
                 )}
               />

@@ -1,4 +1,4 @@
-import Realm, { BSON, schemaVersion } from "realm";
+import Realm from "realm";
 
 export class Note extends Realm.Object<Note> {
   _id!: string;
@@ -7,6 +7,8 @@ export class Note extends Realm.Object<Note> {
   label!: string;
   imagesURL?: string[];
   timestamp!: Date;
+  synced?: boolean;
+  status?: string;
 
   static schema: Realm.ObjectSchema = {
     name: "Note",
@@ -17,6 +19,8 @@ export class Note extends Realm.Object<Note> {
       label: "string",
       imagesURL: "string[]",
       timestamp: "date",
+      synced: "bool",
+      status: "string",
     },
     primaryKey: "_id",
   };
@@ -24,9 +28,11 @@ export class Note extends Realm.Object<Note> {
 
 export class Label extends Realm.Object<Label> {
   _id!: string;
-  name!: string;
+  label!: string;
   count!: number;
   timestamp!: Date;
+  synced?: boolean;
+  status?: string;
 
   static schema: Realm.ObjectSchema = {
     primaryKey: "_id",
@@ -36,55 +42,26 @@ export class Label extends Realm.Object<Label> {
       label: "string",
       count: "int",
       timestamp: "date",
+      synced: "bool",
+      status: "string",
+    },
+  };
+}
+
+export class Image extends Realm.Object<Image> {
+  noteId!: string;
+  images?: string[];
+  static schema: Realm.ObjectSchema = {
+    name: "Image",
+    primaryKey: "noteId",
+    properties: {
+      noteId: "string",
+      images: "string[]",
     },
   };
 }
 
 export const realmConfig = {
-  schema: [Note.schema, Label.schema],
-  schemaVersion: 0,
+  schema: [Note.schema, Label.schema, Image.schema],
+  schemaVersion: 2,
 };
-
-const realmInstance = new Realm(realmConfig);
-
-// export function addNoteToRealm(note) {
-//   console.log(note, 'test');
-//   const noteData = {
-//     _id: note.id,
-//     title: note.title,
-//     content: note.content,
-//     label: note.label,
-//     imagesURL: note.url,
-//     //   timestamp: "date", 
-//   }
-//   console.log(noteData, 'fadsfsdfa2345325345');
-
-//   //   realmInstance.write(() => {
-//   //     realmInstance.create("Note", note);
-//   //   });
-// }
-
-// export function updateNoteInRealm(note) {
-//   console.log(note, 'updated');
-
-//   //   realmInstance.write(() => {
-//   //     let existingNote = realmInstance.objectForPrimaryKey("Note", note.id);
-//   //     if (existingNote) {
-//   //       existingNote.title = note.title;
-//   //       existingNote.content = note.content;
-//   //       existingNote.label = note.label;
-//   //       existingNote.imagesURL = note.imagesURL;
-//   //       existingNote.timestamp = note.timestamp;
-//   //     }
-//   //   });
-// }
-
-// export function deleteNoteFromRealm(noteId) {
-//   realmInstance.write(() => {
-//     let noteToDelete = realmInstance.objectForPrimaryKey("Note", noteId);
-//     if (noteToDelete) {
-//       realmInstance.delete(noteToDelete);
-//     }
-//   });
-// }
-

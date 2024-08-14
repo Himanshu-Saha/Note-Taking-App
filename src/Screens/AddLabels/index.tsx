@@ -1,23 +1,40 @@
-import { default as auth } from "@react-native-firebase/auth";
+import { useRealm } from "@realm/react";
 import React, { useEffect, useState } from "react";
 import { FlatList, SafeAreaView, View } from "react-native";
+import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import ListTemplate from "../../Components/ListTemplate/listTemplate";
-import { useUpdateLabel } from "../../Hooks/firebase";
-import { fetchLabels } from "../../Utils";
+import { Label } from "../../RealmDB";
+import { RootState } from "../../Store";
 import { styles } from "./style";
 import { addLabelProp } from "./types";
+import { REALM } from "../../Constants/Strings";
 
 function ADD_LABELS({ theme }: addLabelProp) {
-  const [notesData, setNotesData] = useState();
-  const user = auth().currentUser;
+  const user = useSelector((state: RootState) => state.common.user);
+  const isLoading = useSelector((state: RootState) => state.loader.isLoading);
+  const realm = useRealm();
+  const uid = user?.uid;
+  const [label, setLabel] = useState<Label[]>();
   const THEME = theme;
-  let uid = user?.uid;
+  // useEffect(() => {
+  //   if (uid) fetchLabels(uid).then((data) => setNotesData(data));
+  // }, []);
+  // useUpdateLabel(uid, setNotesData);
   useEffect(() => {
-    if (uid) fetchLabels(uid).then((data) => setNotesData(data));
-  }, []);
-  useUpdateLabel(uid, setNotesData);
+    if (!isLoading) {
+      const labels = realm.objects<Label>("Label").filtered("status != $0", REALM.STATUS.DELETE).sorted("timestamp", true);
+      const updateLabels = () => {
+        setLabel([...labels]);
+      };
+      updateLabels();
+      labels.addListener(() => updateLabels());
+      return () => {
+        labels.removeListener(updateLabels);
+      };
+    }
+  }, [realm, isLoading]);
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: THEME.BACKGROUND }]}
@@ -32,11 +49,13 @@ function ADD_LABELS({ theme }: addLabelProp) {
         </View>
         <View style={styles.labelContainer}>
           <FlatList
-            data={notesData}
+            data={label}
             style={styles.list}
-            keyExtractor={(item) => item.labelId}
+            keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => <ListTemplate note={item} label={true} uid={uid}/>}
+            renderItem={({ item }) => (
+              <ListTemplate label={item} isEditLable={true} />
+            )}
           ></FlatList>
         </View>
       </View>
