@@ -82,6 +82,7 @@ export const useFirestoreToRealmSync = (
   isNetworkAvalible: boolean
 ) => {
   useEffect(() => {
+    console.log('useFirestoreToRealmSync');
     if (!isLoading && isNetworkAvalible && uid) {
       const unsubscribeNotes = firestore()
         .collection(FIREBASE_STRINGS.USER)
@@ -89,7 +90,11 @@ export const useFirestoreToRealmSync = (
         .collection(FIREBASE_STRINGS.NOTES)
         .onSnapshot((snapshot) => {
           snapshot.docChanges().forEach((change) => {
+            console.log(change.type,'notes');
+            
             const data = change.doc.data();
+            console.log(data.title);
+            
             realmInstance.write(() => {
               if (change.type === "added" || change.type === "modified") {
                 realmInstance.create(
@@ -120,7 +125,6 @@ export const useFirestoreToRealmSync = (
             });
           });
         });
-
       const unsubscribeLabels = firestore()
         .collection(FIREBASE_STRINGS.USER)
         .doc(uid)
@@ -128,6 +132,7 @@ export const useFirestoreToRealmSync = (
         .onSnapshot((snapshot) => {
           snapshot.docChanges().forEach((change) => {
             const data = change.doc.data();
+            console.log(change.type,'label', data.label);
             realmInstance.write(() => {
               if (change.type === "added" || change.type === "modified") {
                 realmInstance.create(
@@ -157,6 +162,7 @@ export const useFirestoreToRealmSync = (
           });
         });
       return () => {
+        console.log('useFirestoreToRealmSync unsubscribe');
         unsubscribeNotes();
         unsubscribeLabels();
       };
