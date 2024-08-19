@@ -21,6 +21,7 @@ import Splash from "../../Screens/SplashScreen";
 import { RootState, useAppDispatch } from "../../Store";
 import { updateLogIn, updateUser } from "../../Store/Common";
 import { setLoading } from "../../Store/Loader";
+import { loadTheme } from "../../Store/Theme";
 import { RootStackParamList } from "../../Types/navigation";
 import { syncRealmToFirestore } from "../../Utils";
 import { toastInfo } from "../../Utils/toast";
@@ -58,6 +59,9 @@ function AuthNavigation({ theme }: authNavigationProps) {
         } else dispatch(updateLogIn(false));
       })
       .catch(() => dispatch(updateLogIn(false)));
+    AsyncStorage.getItem('appTheme').then((theme)=>{
+      dispatch(loadTheme(theme));
+    })
   }, []);
 
   // sync data to firestore based on network
@@ -67,12 +71,15 @@ function AuthNavigation({ theme }: authNavigationProps) {
     } else if (isLoggedIn && isConnected && user?.uid) {
       dispatch(setLoading(true));
       syncRealmToFirestore(user?.uid, realm)
+        .then(() => {
+          dispatch(setLoading(false));
+        })
         .catch((e) => {
           toastInfo(TOAST_STRINGS.SYNC_Failed);
           dispatch(setLoading(false));
         });
-    } else toastInfo(TOAST_STRINGS.CONNECTION_LOST);
-  }, [isConnected,dispatch]);
+    } else if (!isConnected) toastInfo(TOAST_STRINGS.CONNECTION_LOST);
+  }, [isConnected, dispatch]);
   // useFirestoreToRealmSync(user?.uid, realm, isLoading, isConnected);
   return (
     <>
@@ -135,11 +142,7 @@ function AuthNavigation({ theme }: authNavigationProps) {
         </Stack.Navigator>
       </NavigationContainer>
       <Toast />
-      <Spinner
-        visible={isLoading}
-        textContent={"Loading..."}
-        // textStyle={styles.spinnerTextStyle}
-      />
+      <Spinner visible={isLoading} textContent={"Loading..."} textStyle={{color:theme.TEXT1}}/>
     </>
   );
 }

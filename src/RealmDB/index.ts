@@ -41,6 +41,7 @@ export class Label extends Realm.Object<Label> {
       _id: "string",
       label: "string",
       count: "int",
+      countInitial:'int',
       timestamp: "date",
       synced: "bool",
       status: "string",

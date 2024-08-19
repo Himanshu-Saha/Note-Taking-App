@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const network = createSlice({
     name:'network',
     initialState:{
-        isAvailable:false,
+        isAvailable:true,
     },
     reducers:{
         updateNetwork:(state,action)=>{

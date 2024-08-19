@@ -1,19 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActionCreatorWithPayload, Dispatch, UnknownAction, createSlice } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 import { Appearance } from 'react-native';
 
 const initialState = {
-  theme: 'light', // default theme
+  theme: 'light',
 };
 
 const themeSlice = createSlice({
   name: 'theme',
   initialState,
   reducers: {
-    setTheme: (state, action) => {
-      state.theme = action.payload;
-      AsyncStorage.setItem('appTheme', action.payload);
-    },
     toggleTheme: (state) => {
       state.theme = state.theme === 'light' ? 'dark' : 'light';
       AsyncStorage.setItem('appTheme', state.theme);
@@ -27,7 +23,7 @@ const themeSlice = createSlice({
   },
 });
 
-export const { setTheme, toggleTheme, loadTheme ,changeApprearance } = themeSlice.actions;
+export const { toggleTheme, loadTheme ,changeApprearance } = themeSlice.actions;
 
 export const loadThemeFromStorage = () => async (dispatch: (arg0: { payload: any; type: "theme/loadTheme"; }) => void) => {
   const savedTheme = await AsyncStorage.getItem('appTheme');

@@ -5,11 +5,11 @@ import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
 import ListTemplate from "../../Components/ListTemplate/listTemplate";
+import { REALM } from "../../Constants/Strings";
 import { Label } from "../../RealmDB";
 import { RootState } from "../../Store";
 import { styles } from "./style";
 import { addLabelProp } from "./types";
-import { REALM } from "../../Constants/Strings";
 
 function ADD_LABELS({ theme }: addLabelProp) {
   const user = useSelector((state: RootState) => state.common.user);
@@ -18,13 +18,12 @@ function ADD_LABELS({ theme }: addLabelProp) {
   const uid = user?.uid;
   const [label, setLabel] = useState<Label[]>();
   const THEME = theme;
-  // useEffect(() => {
-  //   if (uid) fetchLabels(uid).then((data) => setNotesData(data));
-  // }, []);
-  // useUpdateLabel(uid, setNotesData);
   useEffect(() => {
     if (!isLoading) {
-      const labels = realm.objects<Label>("Label").filtered("status != $0", REALM.STATUS.DELETE).sorted("timestamp", true);
+      const labels = realm
+        .objects<Label>("Label")
+        .filtered("status != $0", REALM.STATUS.DELETE)
+        .sorted("timestamp", true);
       const updateLabels = () => {
         setLabel([...labels]);
       };
@@ -53,9 +52,10 @@ function ADD_LABELS({ theme }: addLabelProp) {
             style={styles.list}
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <ListTemplate label={item} isEditLable={true} />
-            )}
+            renderItem={({ item }) => {
+              if (item.label === "Others") return null;
+              return <ListTemplate label={item} isEditLable={true} />;
+            }}
           ></FlatList>
         </View>
       </View>

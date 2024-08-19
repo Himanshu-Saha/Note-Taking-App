@@ -50,18 +50,19 @@ function HomeNavigation({ theme }: HomeNavigationProps) {
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state: RootState) => state.common.isLogedIn);
   useEffect(() => {
-    dispatch(setLoading(true));
-    console.log("syncFirestoreToRealm");
-    syncFirestoreToRealm(user?.uid, realm)
-      .then(() => {
-        toastInfo(TOAST_STRINGS.SYNC_SUCCESS);
-        dispatch(setLoading(false));
-      })
-      .catch((e) => {
-        toastInfo(TOAST_STRINGS.SYNC_Failed);
-        dispatch(setLoading(false));
-      });
-  }, [isConnected]);
+    if (isConnected) {
+      dispatch(setLoading(true));
+      syncFirestoreToRealm(user?.uid, realm)
+        .then(() => {
+          toastInfo(TOAST_STRINGS.SYNC_SUCCESS);
+          dispatch(setLoading(false));
+        })
+        .catch((e) => {
+          toastInfo(TOAST_STRINGS.SYNC_Failed);
+          dispatch(setLoading(false));
+        });
+    }
+  }, [isConnected, dispatch]);
   useFirestoreToRealmSync(user?.uid, realm, isLoading, isConnected);
   return (
     <>

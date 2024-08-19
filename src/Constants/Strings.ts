@@ -69,10 +69,12 @@ export const STRINGS = {
   CHECK_EMAIL: "Please check your email...",
   ADD_NEW_NOTES: "+  Add New Notes",
   ENTER_LINK_URL: "Enter Link URL",
-  ENTER_URL: '"Enter URL"',
+  ENTER_URL: 'Enter URL',
   ENTER_YOUR: "Enter your ",
   PHOTO_UPLOAD_FAILED: "Photo upload failed",
   UNKNOWN_ERROR: "unknown error",
+  RESET_PASSWORD_LINK: "Send Reset Link",
+  RESET_LINK_FAILED: "Some issue please try again",
 };
 
 export const STRINGS_FIREBASE = {
@@ -154,11 +156,11 @@ export const REALM = {
 };
 
 export const TOAST_STRINGS = {
-  DELETE_EMPTY_NOTE:'Empty note deleted',
-  NOTE_EMPTY:"Note can't be empty",
-  CONNECTION_LOST:'No connection',
-  SYNC_SUCCESS:'Synced successfully',
-  SYNC_Failed:'Synced failed',
+  DELETE_EMPTY_NOTE: "Empty note deleted",
+  NOTE_EMPTY: "Note can't be empty",
+  CONNECTION_LOST: "No connection",
+  SYNC_SUCCESS: "Synced successfully",
+  SYNC_Failed: "Synced failed",
   SELECT_IMAGE: "Please select an image",
   IMAGE_UPDATED: "Image updated successfully",
   LABEL_EDIT: "Label edited successfully",
@@ -182,4 +184,7 @@ export const TOAST_STRINGS = {
   NOTES_UPDATE_FAILED: "Failed to update note",
   NOTES_CREATION_FAILED: "Failed to create note",
   NOTES_DELETION_FAILED: "Failed to delete note",
+  INVALID_CREDENTIALS: "Invalid Credentials",
+  POPUP_CLOSED: "Sign-in interrupted.",
+  LABEL_EXISTS: "Label already exist",
 };

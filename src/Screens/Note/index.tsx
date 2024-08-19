@@ -198,7 +198,6 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           };
           addNoteToRealm(noteToRealm, img.current, realm);
         }
-        // }
       }
     }
   };

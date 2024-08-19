@@ -19,16 +19,26 @@ function AddLabel({ uid, show, setShow, theme }: addLabelProps) {
   const createLabelFromDialog = async () => {
     if (newLabelName) {
       const regex = /^[\s\u00A0\xA0]*$/;
+      const labelExist = realm
+        .objects("Label")
+        .find((item) => item.label === newLabelName);
+      if (labelExist) {
+        toastError(TOAST_STRINGS.LABEL_EXISTS);
+        setShow(false);
+        return;
+      }
       if (uid && !regex.test(newLabelName)) {
         if (!isLoading && isNetworkAvalible) createLabel(uid, newLabelName);
         else {
+          console.log('hek');
+          
           addLabelToRealm(newLabelName, realm);
         }
-      } else {
-        toastError(TOAST_STRINGS.EMPTY_LABEL);
       }
+    } else {
+      toastError(TOAST_STRINGS.EMPTY_LABEL);
     }
-    setShow(false)
+    setShow(false);
   };
   return (
     <Modal
@@ -45,10 +55,7 @@ function AddLabel({ uid, show, setShow, theme }: addLabelProps) {
             {STRINGS.ADD_LABEL}
           </Text>
           <TextInput
-            style={[
-              styles.input,
-              { color: theme.TEXT1 },
-            ]}
+            style={[styles.input, { color: theme.TEXT1 }]}
             placeholder={STRINGS.LABEL_NAME}
             placeholderTextColor={theme.TEXT1}
             maxLength={20}
