@@ -1,7 +1,7 @@
 import { Platform, StyleSheet } from "react-native";
 import {
-    heightPercentageToDP,
-    widthPercentageToDP,
+  heightPercentageToDP,
+  widthPercentageToDP,
 } from "react-native-responsive-screen";
 
 export const styles = StyleSheet.create({
@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
     color: "red",
     fontSize: heightPercentageToDP("1.5%"),
     fontStyle: "italic",
+    width:widthPercentageToDP('85%')
   },
   label: {
     color: "rgb(114,119,122)",

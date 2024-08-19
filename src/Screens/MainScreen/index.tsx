@@ -9,11 +9,10 @@ import CustomText from '../../Components/Text';
 import { ICONS } from '../../Constants/Icons';
 import { STRINGS } from '../../Constants/Strings';
 import { SCREEN_CONSTANTS } from '../../Constants/index';
+import { RootState } from '../../Store';
 import Google from './google';
 import { styles } from './style';
 import { EnterProps } from './type';
-import { RootState } from '../../Store';
-import { toastSuccess } from '../../Utils/toast';
 
 function Enter({ navigation, theme }: EnterProps) {
   const isConnected = useSelector((state: RootState) => state.network.isAvailable)

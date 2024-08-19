@@ -1,10 +1,9 @@
   import { default as auth } from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, Text, View } from "react-native";
+import { SafeAreaView, Text, View } from "react-native";
 import withTheme from "../../Components/HOC";
 import Search from "../../Components/Header";
-import ListTemplate from "../../Components/ListTemplate/listTemplate";
 import { STRINGS, STRINGS_FIREBASE } from "../../Constants/Strings";
 import { fetchReminderData } from "../../Firebase Utils";
 import { styles } from "./style";
@@ -77,15 +76,11 @@ function Reminder({ navigation, theme, route }: ReminderProps) {
         <View>
           <Search
             onChangeText={search}
-            handleSetInittialOnBlur={() => {
-              setSearchData(notesData);
-              setNoData(false);
-            }}
             notesData={notesData}
             headerText={"Reminder"}
           />
         </View>
-        {noData && (
+        {/* {noData && (
           <View>
             <Text style={[styles.noReminderText, { color: THEME.TEXT1 }]}>
               {STRINGS.NO_REMINDER_EXIST}
@@ -114,7 +109,12 @@ function Reminder({ navigation, theme, route }: ReminderProps) {
               {STRINGS.ADD_REMINDER}
             </Text>
           </View>
-        )}
+        )} */}
+        <View style={styles.noReminder}>
+          <Text style={[styles.noReminderText, { color: THEME.TEXT1 }]}>
+            Feature soon will be available
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );

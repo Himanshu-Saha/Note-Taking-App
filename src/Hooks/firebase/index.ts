@@ -83,18 +83,15 @@ export const useFirestoreToRealmSync = (
 ) => {
   useEffect(() => {
     console.log('useFirestoreToRealmSync');
-    if (!isLoading && isNetworkAvalible && uid) {
+    if (isNetworkAvalible && uid) {
+      console.log('start hook');
       const unsubscribeNotes = firestore()
         .collection(FIREBASE_STRINGS.USER)
         .doc(uid)
         .collection(FIREBASE_STRINGS.NOTES)
         .onSnapshot((snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            console.log(change.type,'notes');
-            
-            const data = change.doc.data();
-            console.log(data.title);
-            
+          snapshot.docChanges().forEach((change) => {         
+            const data = change.doc.data();           
             realmInstance.write(() => {
               if (change.type === "added" || change.type === "modified") {
                 realmInstance.create(
@@ -122,6 +119,9 @@ export const useFirestoreToRealmSync = (
                   realmInstance.delete(noteToDelete);
                 }
               }
+              else{
+                console.log(change,'unsynced data');
+              }
             });
           });
         });
@@ -141,6 +141,7 @@ export const useFirestoreToRealmSync = (
                     _id: change.doc.id,
                     label: data.label,
                     count: data.count,
+                    countInitial: data.count,
                     timestamp: data.time_stamp
                       ? data.time_stamp.toDate()
                       : new Date(),

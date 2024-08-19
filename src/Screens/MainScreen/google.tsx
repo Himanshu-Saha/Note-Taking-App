@@ -79,7 +79,7 @@ export default function Google() {
 
   return (
     <View style={styles.google}>
-      <TouchableOpacity onPress={_signIn}>
+      <TouchableOpacity onPress={_signIn} activeOpacity={0.6}>
         <View style={styles.googleContainer}>
           {ICONS.GOOGLE(
             Platform.OS == PLATEFORM.IOS

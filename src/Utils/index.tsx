@@ -21,6 +21,7 @@ import { setLoading } from "../Store/Loader";
 import { RootStackParamList, RootStackScreenProps } from "../Types/navigation";
 import { toastError, toastSuccess } from "./toast";
 import { Note, valuesTypes } from "./types";
+
 export const logInUser = async (
   email: string,
   password: string,
@@ -40,7 +41,13 @@ export const logInUser = async (
     dispatch(setLoading(false));
     navigation.navigate(SCREEN_CONSTANTS.HomeNavigation);
   } catch (error) {
-    toastError(TOAST_STRINGS.LOGIN_FAILED);
+    switch (error.code) {
+      case FIREBASE_STRINGS.ERROR.INVALID_CREDENTIALS:
+        toastError(TOAST_STRINGS.INVALID_CREDENTIALS);
+        break;
+      default:
+        toastError(FIREBASE_STRINGS.ERROR.DEFAULT);
+    }
     dispatch(setLoading(false));
   }
 };
@@ -165,8 +172,7 @@ export const SignupSchema = Yup.object().shape({
 export const fetchAllData = async (uid: string) => {
   try {
     await firestore().collection(FIREBASE_STRINGS.USER).doc(uid).get();
-  } catch (e) {
-  }
+  } catch (e) {}
 };
 
 export const fetchLabels = async (uid: string) => {
@@ -352,6 +358,10 @@ export const deleteLabel = async (uid: string, labelId: string) => {
       .doc(uid)
       .collection(FIREBASE_STRINGS.LABELS)
       .doc(labelId);
+    const docSnapshot = await labelRef.get();
+    if (!docSnapshot.exists) {
+      throw new Error("LABEL_NOT_FOUND");
+    }
     batch.delete(labelRef);
     const notesRef = firestore()
       .collection(FIREBASE_STRINGS.USER)
@@ -373,8 +383,13 @@ export const deleteLabel = async (uid: string, labelId: string) => {
     });
     await batch.commit();
     toastSuccess(TOAST_STRINGS.LABEL_DELETED);
-  } catch {
-    toastError(TOAST_STRINGS.LABEL_DELETION_FAILED);
+  } catch (error) {
+    if (error.message === "LABEL_NOT_FOUND") {
+      toastError("Label doesn't exist");
+    } else {
+      toastError(TOAST_STRINGS.LABEL_DELETION_FAILED);
+    }
+    console.error("Error deleting label: ", error);
   }
 };
 
@@ -449,6 +464,7 @@ export async function syncFirestoreToRealm(uid: string, realmInstance: Realm) {
           _id: doc.id,
           label: data.label,
           count: data.count,
+          countInitial: data.count,
           timestamp: data.time_stamp.toDate(),
           synced: true,
           status: REALM.STATUS.FIRESTORE,
@@ -503,7 +519,6 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
     const notes = realmInstance.objects("Note");
     const labels = realmInstance.objects("Label");
     if (notes.length === 0 && labels.length === 0) {
-      console.log("empty");
       return;
     }
     const batch = firestore().batch();
@@ -572,11 +587,14 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
               realmInstance.write(() => (label.synced = true));
               break;
             case REALM.STATUS.MODIFY:
+              console.log(label, "leabe");
               const labelExist = await docRef.get();
               if (labelExist.exists) {
                 batch.update(docRef, {
                   label: label.label,
-                  count: label.count,
+                  count: firestore.FieldValue.increment(
+                    label.count - label.countInitial
+                  ),
                   time_stamp: firestore.FieldValue.serverTimestamp(),
                 });
                 realmInstance.write(() => (label.synced = true));
@@ -608,7 +626,7 @@ export async function syncRealmToFirestore(uid: string, realmInstance: Realm) {
         note.synced = false; // Optionally reset synced status or take other corrective actions
       });
       labels.forEach((label) => {
-        label.synced = false; // Optionally reset synced status or take other corrective actions
+        label.synced = false;
       });
     }
   } catch (error) {
@@ -634,7 +652,9 @@ export function addNoteToRealm(note, url: string[], realmInstance: Realm) {
     realmInstance.create("Note", noteData);
     let label = realmInstance.objectForPrimaryKey("Label", note.label);
     if (label) {
-      label.count = label.count + 1; // Ensure count is incremented properly
+      label.count = label.count + 1;
+      label.synced = false;
+      label.status = REALM.STATUS.MODIFY;
     } else {
       console.error(`Label with ID ${note.label} does not exist.`);
     }
@@ -691,11 +711,11 @@ export function addLabelToRealm(labelName: string, realmInstance: Realm) {
     _id: generateFirestoreId(), // Ensure this function generates unique IDs
     label: labelName,
     count: 0,
+    countInitial:0,
     timestamp: new Date(),
     synced: false,
     status: REALM.STATUS.ADD,
   };
-
   realmInstance.write(() => {
     realmInstance.create("Label", labelData);
     toastSuccess(TOAST_STRINGS.LABEL_CREATED);
