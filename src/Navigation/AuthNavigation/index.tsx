@@ -10,7 +10,6 @@ import { useSelector } from "react-redux";
 import withTheme from "../../Components/HOC";
 import { SCREEN_CONSTANTS } from "../../Constants";
 import { TOAST_STRINGS } from "../../Constants/Strings";
-import { useFirestoreToRealmSync } from "../../Hooks/firebase";
 import { useNetworkAvailable } from "../../Hooks/network";
 import ForgotPassword from "../../Screens/ForgotPassword";
 import Label from "../../Screens/Labels";
@@ -23,7 +22,7 @@ import { RootState, useAppDispatch } from "../../Store";
 import { updateLogIn, updateUser } from "../../Store/Common";
 import { setLoading } from "../../Store/Loader";
 import { RootStackParamList } from "../../Types/navigation";
-import { syncFirestoreToRealm, syncRealmToFirestore } from "../../Utils";
+import { syncRealmToFirestore } from "../../Utils";
 import { toastInfo } from "../../Utils/toast";
 import HomeNavigation from "../HomeNavigation";
 import { authNavigationProps } from "./types";
@@ -68,24 +67,13 @@ function AuthNavigation({ theme }: authNavigationProps) {
     } else if (isLoggedIn && isConnected && user?.uid) {
       dispatch(setLoading(true));
       syncRealmToFirestore(user?.uid, realm)
-        .then(() => {
-          syncFirestoreToRealm(user?.uid, realm)
-            .then(() => {
-              toastInfo(TOAST_STRINGS.SYNC_SUCCESS);
-              dispatch(setLoading(false));
-            })
-            .catch((e) => {
-              toastInfo(TOAST_STRINGS.SYNC_Failed);
-              dispatch(setLoading(false));
-            });
-        })
         .catch((e) => {
           toastInfo(TOAST_STRINGS.SYNC_Failed);
           dispatch(setLoading(false));
         });
     } else toastInfo(TOAST_STRINGS.CONNECTION_LOST);
-  }, [isConnected]);
-  useFirestoreToRealmSync(user?.uid, realm, isLoading, isConnected);
+  }, [isConnected,dispatch]);
+  // useFirestoreToRealmSync(user?.uid, realm, isLoading, isConnected);
   return (
     <>
       <NavigationContainer>

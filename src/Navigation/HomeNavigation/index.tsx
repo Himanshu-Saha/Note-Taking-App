@@ -2,11 +2,13 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { useRealm } from "@realm/react";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import AddLabel from "../../Components/AddLabel";
 import withTheme from "../../Components/HOC";
 import MyTabBar from "../../Components/TabBar";
 import { SCREEN_CONSTANTS } from "../../Constants";
+import { TOAST_STRINGS } from "../../Constants/Strings";
+import { useFirestoreToRealmSync } from "../../Hooks/firebase";
 import { Label } from "../../RealmDB";
 import ADD_LABELS from "../../Screens/AddLabels";
 import Home from "../../Screens/Home";
@@ -14,7 +16,10 @@ import Note from "../../Screens/Note";
 import Reminder from "../../Screens/Reminder";
 import Setting from "../../Screens/Setting";
 import { RootState } from "../../Store";
+import { setLoading } from "../../Store/Loader";
 import { RootTabParamList } from "../../Types/navigation";
+import { syncFirestoreToRealm } from "../../Utils";
+import { toastInfo } from "../../Utils/toast";
 import { HomeNavigationProps } from "./types";
 
 function HomeNavigation({ theme }: HomeNavigationProps) {
@@ -41,7 +46,23 @@ function HomeNavigation({ theme }: HomeNavigationProps) {
         labels.removeListener(updateLabels);
       };
     }
-  }, [realm,isLoading]);
+  }, [realm, isLoading]);
+  const dispatch = useDispatch();
+  const isLoggedIn = useSelector((state: RootState) => state.common.isLogedIn);
+  useEffect(() => {
+    dispatch(setLoading(true));
+    console.log("syncFirestoreToRealm");
+    syncFirestoreToRealm(user?.uid, realm)
+      .then(() => {
+        toastInfo(TOAST_STRINGS.SYNC_SUCCESS);
+        dispatch(setLoading(false));
+      })
+      .catch((e) => {
+        toastInfo(TOAST_STRINGS.SYNC_Failed);
+        dispatch(setLoading(false));
+      });
+  }, [isConnected]);
+  useFirestoreToRealmSync(user?.uid, realm, isLoading, isConnected);
   return (
     <>
       <Tab.Navigator
