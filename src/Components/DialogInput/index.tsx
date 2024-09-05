@@ -34,16 +34,23 @@ const CustomDialogInput = ({
             style={[styles.input, { color: theme.TEXT1 }]}
             placeholder={placeholder}
             placeholderTextColor={theme.TEXT1}
-            maxLength={20}
+            maxLength={description === STRINGS.ENTER_LINK_URL ? 40 : 20}
             onChangeText={setInputValue}
             value={inputValue}
           />
           <View style={styles.buttonContainer}>
-            <Button title={STRINGS.CANCEL} onPress={onCancel} />
+            <Button
+              title={STRINGS.CANCEL}
+              onPress={() => {
+                setInputValue("");
+                onCancel();
+              }}
+            />
             <Button
               title={STRINGS.SUBMIT}
               onPress={() => {
                 onSubmit(inputValue);
+                setInputValue("");
                 onCancel();
               }}
             />

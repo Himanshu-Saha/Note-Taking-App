@@ -30,8 +30,6 @@ function AddLabel({ uid, show, setShow, theme }: addLabelProps) {
       if (uid && !regex.test(newLabelName)) {
         if (!isLoading && isNetworkAvalible) createLabel(uid, newLabelName);
         else {
-          console.log('hek');
-          
           addLabelToRealm(newLabelName, realm);
         }
       }
