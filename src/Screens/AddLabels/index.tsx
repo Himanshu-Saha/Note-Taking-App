@@ -41,8 +41,8 @@ function ADD_LABELS({ theme }: addLabelProp) {
       <View style={styles.subContainer}>
         <View>
           <Search
-            // onChangeText={search}
-            // notesData={notesData}
+            onChangeText={search}
+            notesData={notesData}
             headerText={"Edit Labels"}
           />
         </View>

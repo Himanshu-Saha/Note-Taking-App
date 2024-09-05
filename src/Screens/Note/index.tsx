@@ -7,11 +7,12 @@ import {
   ImageRequireSource,
   Keyboard,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   SafeAreaView,
   StyleProp,
   TextInput,
-  View,
+  View
 } from "react-native";
 import FastImage, { ImageStyle, ResizeMode } from "react-native-fast-image";
 import ImageModal from "react-native-image-modal";
@@ -364,6 +365,19 @@ const Note = ({ route, theme }: NoteScreenProps) => {
           placeholder={STRINGS.START_WRITING_HERE}
           onChange={(text) => {
             articleData.current = text;
+          }}
+          onLink={async url => {       
+            console.log('helo');
+            try {
+              const canOpen = await Linking.canOpenURL(url);
+              if (canOpen) {
+                await Linking.openURL(url);
+              } else {
+                console.error("Cannot open this URL:", url);
+              }
+            } catch (error) {
+              console.error("Error opening URL:", error);
+            }
           }}
           // onCursorPosition={onCursorPosition}
           useContainer
